@@ -1,1 +1,203 @@
-# Regulatory-Compliance-Intelligence-Hub-
+# Regulatory & Compliance Intelligence Hub
+
+An enterprise AI platform for grounded, auditable regulatory compliance verification (e.g. GDPR, EU AI Act). The goal is to give compliance teams answers tied to official regulatory text, with traceable citations rather than unsupported claims.
+
+> **Current status: Phase 1 – Core Infrastructure & System Connectivity.**
+> Only the foundation exists today: a dashboard, an API, and a PostgreSQL/pgvector database, with a single diagnostic that proves all three are wired together. Document upload, clause parsing, Q&A and report export are *out of scope* for Phase 1 (see [requirement-docs/brd-1.md](requirement-docs/brd-1.md)).
+
+## Architecture
+
+```
+┌──────────────────┐   HTTP/JSON   ┌──────────────────┐   asyncpg   ┌──────────────────────┐
+│ Next.js frontend ├──────────────►│ FastAPI backend  ├────────────►│ PostgreSQL + pgvector│
+│ :4001            │  CORS-limited │ :7001            │  pooled     │ (Neon, hosted)       │
+└──────────────────┘               └──────────────────┘             └──────────────────────┘
+```
+
+The dashboard's **Test Full Stack Connection** button calls `GET /api/health`. The backend inserts a `health_checks` row containing a sample 3‑dimension vector, reads the latest row back, and returns the result. A successful response confirms DB read/write and pgvector support.
+
+## Tech Stack
+
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Next.js 15.0.3 (App Router), React 18.3.1, TypeScript 5.5.4, Tailwind CSS 3.4.13 |
+| Backend | Python, FastAPI 0.115.0, Uvicorn 0.30.6, Pydantic / pydantic-settings 2.x |
+| Database | PostgreSQL with the `pgvector` extension (hosted on Neon), SQLAlchemy 2.0 (async) + asyncpg, pgvector-python |
+| Migrations | Alembic 1.13.2 (async env) |
+
+Exact backend versions are pinned in [backend/requirements.txt](backend/requirements.txt); frontend versions in [frontend/package.json](frontend/package.json).
+
+## Project Structure
+
+```
+.
+├── README.md
+├── requirement-docs/
+│   └── brd-1.md                  # Phase 1 Business Requirements Document
+├── backend/
+│   ├── .env.example              # Template for backend/.env (not committed)
+│   ├── Makefile                  # `make dev` – run API with auto-reload
+│   ├── requirements.txt
+│   ├── alembic.ini               # URL left blank; injected from settings at runtime
+│   ├── alembic/
+│   │   ├── env.py                # Async Alembic env, reads DATABASE_URL from app settings
+│   │   └── versions/             # Migrations (currently: create health_checks + pgvector extension)
+│   └── app/
+│       ├── main.py               # FastAPI app, CORS, `/` and `/api/health` routes
+│       ├── core/config.py        # Settings (pydantic-settings, loads backend/.env)
+│       ├── db/session.py         # Async engine (capped pool) + `get_db` dependency
+│       └── models/system.py      # SQLAlchemy `Base` and `HealthCheck` model
+└── frontend/
+    ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed)
+    ├── package.json
+    ├── next.config.mjs
+    ├── tailwind.config.ts / postcss.config.mjs / tsconfig.json
+    └── app/
+        ├── layout.tsx            # Root layout and metadata
+        ├── page.tsx              # Dashboard with the diagnostic button and status badge
+        └── globals.css
+```
+
+## Frontend
+
+- **Architecture:** Single Next.js App Router page ([frontend/app/page.tsx](frontend/app/page.tsx)), a client component. It holds the diagnostic state (`idle` / `loading` / `success` / `error`), calls `${NEXT_PUBLIC_API_URL}/api/health` with `fetch`, and renders the JSON result. While loading, it shows a "database may be waking up" message and disables the button to prevent duplicate submissions.
+- **Styling:** Tailwind CSS (dark slate theme). Tailwind scans `app/**` and `components/**`.
+- **Dev server port:** `4001` (set in the `dev` script). The backend's default CORS origin matches this.
+
+Commands (run from `frontend/`):
+
+| Command | Purpose |
+| --- | --- |
+| `npm install` | Install dependencies |
+| `npm run dev` | Dev server at http://localhost:4001 |
+| `npm run build` | Production build |
+| `npm run start` | Serve the production build (Next.js default port 3000 unless `-p` is passed) |
+
+## Backend
+
+- **Architecture:** FastAPI app in [backend/app/main.py](backend/app/main.py). Configuration comes from environment variables via pydantic-settings. DB access uses an async SQLAlchemy engine and a per-request session from the `get_db` dependency.
+- **Connection limits:** The pool is deliberately small (`DB_POOL_SIZE=5`, `DB_MAX_OVERFLOW=5`) because Neon's free tier has limited compute and connections. `pool_pre_ping` is enabled so connections dropped while the database was idle are recovered.
+- **CORS:** Only `FRONTEND_ORIGIN` is allowed.
+
+### API
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/` | Liveness: `{"service": ..., "status": "online"}` |
+| `GET` | `/api/health` | Writes a `health_checks` row (with a sample vector), reads the latest row back. Returns `200` with `api_status`, `database_status`, `write_verified`, `read_verified`, `vector_support_verified`, `latest_record`, `checked_at`; returns `503` with a `detail` message if the DB step fails. |
+
+FastAPI's interactive docs are served at http://localhost:7001/docs.
+
+> Note: `/api/health` **writes a row on every call**, so the `health_checks` table grows with each diagnostic. The `/api` prefix comes from `API_V1_PREFIX`.
+
+### Database
+
+One table exists so far, `health_checks` ([backend/app/models/system.py](backend/app/models/system.py)):
+
+| Column | Type |
+| --- | --- |
+| `id` | integer, primary key, autoincrement |
+| `status` | varchar(50), not null |
+| `test_vector` | `vector(3)`, not null |
+| `created_at` | timestamptz, server default `now()` |
+
+The initial migration runs `CREATE EXTENSION IF NOT EXISTS vector`, so the database user needs permission to create that extension (or it must already be enabled).
+
+Commands (run from `backend/`, with the virtualenv active unless noted):
+
+| Command | Purpose |
+| --- | --- |
+| `pip install -r requirements.txt` | Install dependencies |
+| `alembic upgrade head` | Apply migrations |
+| `alembic downgrade -1` | Roll back the last migration |
+| `alembic revision --autogenerate -m "message"` | Create a migration from model changes (import new models in `alembic/env.py` so they're registered) |
+| `make dev` | Run the API with reload on port 7001. **Requires the virtualenv at `backend/.venv`**, since the Makefile calls `.venv/bin/uvicorn`. |
+
+## Environment Configuration
+
+Never commit real credentials. `backend/.env` is git-ignored.
+
+**Backend** – copy [backend/.env.example](backend/.env.example) to `backend/.env`:
+
+| Variable | Required | Default | Description |
+| --- | --- | --- | --- |
+| `DATABASE_URL` | Yes | – | Async SQLAlchemy URL, e.g. `postgresql+asyncpg://<user>:<password>@<host>:<port>/<db>?ssl=require` |
+| `FRONTEND_ORIGIN` | No | `http://localhost:4001` | Origin allowed by CORS |
+| `PROJECT_NAME` | No | `Regulatory & Compliance Intelligence Hub` | App title |
+| `API_V1_PREFIX` | No | `/api` | Prefix for API routes |
+| `DB_POOL_SIZE` | No | `5` | Base connection pool size |
+| `DB_MAX_OVERFLOW` | No | `5` | Extra connections beyond the pool |
+
+The backend reads `.env` relative to the working directory, so run backend commands from `backend/`.
+
+**Frontend** – [frontend/.env.local](frontend/.env.local) is committed and holds only a public value:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | `http://localhost:7001` | Backend base URL (exposed to the browser) |
+
+## Local Development Setup
+
+**Prerequisites:** Node.js and npm (Node 20 is known to work), Python 3 with `venv`, and a PostgreSQL database with the `pgvector` extension available. The project is set up for a Neon PostgreSQL instance, but any pgvector-enabled Postgres reachable from your machine should work with the right `DATABASE_URL`. The Python version expected by the pinned dependencies isn't documented in the repo; if installation fails on a very new Python, try an earlier 3.x release.
+
+1. **Clone the repo and enter it.**
+
+2. **Backend**
+   ```bash
+   cd backend
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   cp .env.example .env        # then edit .env and set DATABASE_URL
+   alembic upgrade head
+   make dev                    # API on http://localhost:7001
+   ```
+
+3. **Frontend** (in a second terminal)
+   ```bash
+   cd frontend
+   npm install
+   npm run dev                 # UI on http://localhost:4001
+   ```
+
+4. **Verify:** open http://localhost:4001 and click **Test Full Stack Connection**. The badge should switch to *Operational* and show the JSON payload. You can also test the API directly: `curl http://localhost:7001/api/health`.
+
+## Run with Docker (auto-rebuild on change)
+
+Requires Docker with Compose 2.22+ and a filled-in `backend/.env`. Run from the repo root:
+
+```bash
+make up         # build + run backend (:7001) and frontend (:4001) with file watching
+make migrate    # alembic upgrade head inside the backend container
+make logs | ps | down | rebuild
+```
+
+Everything lives in the root [Makefile](Makefile) and [docker/](docker/) (compose file plus one Dockerfile per service). `develop.watch` in [docker/docker-compose.yml](docker/docker-compose.yml): source edits are synced and hot-reloaded (uvicorn `--reload`, `next dev`); config files restart the process; changes to `requirements.txt`, `package*.json`, a Dockerfile or `backend/.env` rebuild the image and recreate the container. Dependency layers are cached. The database is external (Neon), so there is no DB container. Host ports 7001/4001 must be free.
+
+## Testing
+
+There is no automated test suite yet (no backend or frontend tests, and no linter configuration). `npm run lint` is defined in `package.json` but ESLint is not installed or configured, so it isn't usable as-is. For now, the end-to-end check is the diagnostic described in step 4 above. For a quick type check of the frontend, run `npx tsc --noEmit` from `frontend/`.
+
+## Build and Deployment
+
+- **Frontend build:** `cd frontend && npm run build`, then `npm run start`.
+- **Backend:** no Dockerfile or production server config exists in the repo. For a non-reload run, use `uvicorn app.main:app --host 0.0.0.0 --port 7001` from `backend/`.
+- **Database:** apply schema changes with `alembic upgrade head` against the target database before starting a new backend version.
+- **Deployment target:** no CI/CD or hosting configuration is committed. When deploying, set the backend env vars above, set `FRONTEND_ORIGIN` to the deployed frontend URL, and set `NEXT_PUBLIC_API_URL` to the deployed backend URL **at frontend build time** (it is inlined into the client bundle).
+
+## Troubleshooting
+
+| Symptom | Likely cause / fix |
+| --- | --- |
+| Backend fails at startup with a validation error for `DATABASE_URL` | `backend/.env` is missing or you're not running from `backend/`. |
+| `make dev` → `.venv/bin/uvicorn: No such file or directory` | Create the virtualenv at `backend/.venv` and install requirements (see setup step 2). |
+| Dashboard shows an error or "Unable to reach the processing engine" | Backend isn't running, `NEXT_PUBLIC_API_URL` is wrong, or the database is waking up from idle (Neon free tier scales to zero when idle). Retry after a few seconds. |
+| Browser console shows a CORS error | The frontend isn't served from `FRONTEND_ORIGIN`. Use port 4001 or update `FRONTEND_ORIGIN`. Restart the backend after changing `.env`. |
+| `/api/health` returns `503` | Read the `detail` field. Common causes: migrations not applied (`alembic upgrade head`), wrong credentials, or the `vector` extension is missing. |
+| `alembic upgrade head` fails on `CREATE EXTENSION vector` | The DB user lacks permission, or pgvector isn't available on the server. |
+| "too many connections" errors | The free tier has a connection limit; use the direct (non-pooler) Neon URL. Keep `DB_POOL_SIZE + DB_MAX_OVERFLOW` low and close other clients. |
+| Changed `NEXT_PUBLIC_API_URL` but nothing changed | Restart `npm run dev` (or rebuild); the value is read at build/start time. |
+
+## Further Reading
+
+- [requirement-docs/brd-1.md](requirement-docs/brd-1.md) – Phase 1 business requirements, functional requirements, and acceptance criteria.

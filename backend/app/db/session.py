@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 
-# NOTE: Aiven free tier PostgreSQL enforces a hard cap of 20 concurrent
+# NOTE: free-tier Postgres enforces a small cap on concurrent
 # connections. We deliberately restrict the pool so the app never starves
 # other services (migrations, admin tools, etc.) of connections.
 engine: AsyncEngine = create_async_engine(

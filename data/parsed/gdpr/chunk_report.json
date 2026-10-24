@@ -1,0 +1,46 @@
+{
+  "max_words": 350,
+  "source_sha256": "70b7e6bf552435b4e24572e26cfc0b07ecd19860a67cacd361500b7ae61c35bb",
+  "counts": {
+    "chunks": 670,
+    "by_split_reason": {
+      "definition": 26,
+      "paragraph": 383,
+      "point": 86,
+      "recital": 173,
+      "trailing": 2
+    },
+    "by_type": {
+      "article": 497,
+      "recital": 173
+    },
+    "articles_covered": 99,
+    "recitals_covered": 173
+  },
+  "words": {
+    "min": 7,
+    "p25": 38,
+    "median": 59,
+    "p75": 100,
+    "p90": 171,
+    "max": 493
+  },
+  "over_limit": {
+    "article_chunks": [],
+    "recitals": 5,
+    "recitals_over_384_words": [
+      "gdpr:rct50",
+      "gdpr:rct71",
+      "gdpr:rct143"
+    ]
+  },
+  "cross_refs": {
+    "chunks_with_refs": 186,
+    "internal_refs": 453,
+    "unresolved": 0,
+    "external_skipped": 30
+  },
+  "ok": true,
+  "errors": [],
+  "warnings": []
+}

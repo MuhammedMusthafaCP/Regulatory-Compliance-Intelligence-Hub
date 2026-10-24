@@ -14,7 +14,7 @@ app = FastAPI(
     description=(
         "Phase 1 baseline API for the Regulatory & Compliance Intelligence "
         "Hub. Verifies end-to-end connectivity across Next.js, FastAPI, "
-        "and Aiven PostgreSQL (pgvector)."
+        "and Neon PostgreSQL (pgvector)."
     ),
     version="0.1.0",
 )

@@ -11,3 +11,7 @@ frontend/out/
 
 # Editor / OS
 .DS_Store
+
+# Playwright
+.playwright-mcp/
+__pycache__/

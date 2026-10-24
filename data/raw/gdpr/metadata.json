@@ -1,0 +1,16 @@
+{
+  "regulation": "Regulation (EU) 2016/679 (GDPR)",
+  "celex": "32016R0679",
+  "eli": "http://data.europa.eu/eli/reg/2016/679/oj",
+  "language": "EN",
+  "format": "XHTML (EUR-Lex 'HTML' view, original Official Journal text, L 119, 4.5.2016)",
+  "source_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32016R0679",
+  "retrieved_at": "2026-10-23T19:50Z",
+  "retrieved_with": "Playwright (real browser, to pass EUR-Lex's AWS WAF challenge); same-origin fetch of the page body",
+  "files": [
+    {"path": "gdpr-celex-32016R0679-en.html", "bytes": 809033, "sha256": "70b7e6bf552435b4e24572e26cfc0b07ecd19860a67cacd361500b7ae61c35bb"}
+  ],
+  "observed_structure": {"chapters": 11, "sections": 15, "articles": 99, "recitals": 173, "annexes": 0},
+  "html_anchors": "art_N, rct_N, cpt_ROMAN, cpt_ROMAN.sct_N",
+  "licence": "EUR-Lex legal documents reusable per Commission Decision 2011/833/EU; attribution: © European Union, https://eur-lex.europa.eu. Only the Official Journal version is authentic. See https://eur-lex.europa.eu/content/legal-notice/legal-notice.html"
+}

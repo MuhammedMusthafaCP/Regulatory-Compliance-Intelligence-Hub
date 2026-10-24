@@ -1,0 +1,19 @@
+{
+  "source": {
+    "file": "gdpr-celex-32016R0679-en.html",
+    "sha256": "70b7e6bf552435b4e24572e26cfc0b07ecd19860a67cacd361500b7ae61c35bb",
+    "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32016R0679",
+    "retrieved_at": "2026-10-23T19:50Z"
+  },
+  "counts": {
+    "chapters": 11,
+    "sections": 15,
+    "articles": 99,
+    "recitals": 173,
+    "footnotes": 21,
+    "paragraphs": 390
+  },
+  "ok": true,
+  "errors": [],
+  "warnings": []
+}

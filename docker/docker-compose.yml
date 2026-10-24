@@ -1,0 +1,50 @@
+# Dev stack, driven by the root Makefile (`make up`). Paths are relative to this file.
+#
+# `develop.watch` keeps the containers in sync with the code:
+#   sync          - copy changed source in; uvicorn --reload / next dev hot-reload
+#   sync+restart  - copy and restart the process (config read only at startup)
+#   rebuild       - rebuild the image and recreate the container (dependency changes)
+# The database is external (Neon), so there is no db service.
+name: rcih
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/backend.Dockerfile
+    ports:
+      - "7001:8000"
+    env_file: ../backend/.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    develop:
+      watch:
+        - {action: sync, path: ../backend/app, target: /app/app, ignore: ["**/__pycache__"]}
+        - {action: sync, path: ../backend/alembic, target: /app/alembic}
+        - {action: rebuild, path: ../backend/requirements.txt}
+        - {action: rebuild, path: ../backend/.env}
+        - {action: rebuild, path: ../docker/backend.Dockerfile}
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    ports:
+      - "4001:4001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    develop:
+      watch:
+        - {action: sync, path: ../frontend/app, target: /app/app}
+        - {action: sync+restart, path: ../frontend/next.config.mjs, target: /app/next.config.mjs}
+        - {action: sync+restart, path: ../frontend/tailwind.config.ts, target: /app/tailwind.config.ts}
+        - {action: sync+restart, path: ../frontend/postcss.config.mjs, target: /app/postcss.config.mjs}
+        - {action: sync+restart, path: ../frontend/.env.local, target: /app/.env.local}
+        - {action: rebuild, path: ../frontend/package.json}
+        - {action: rebuild, path: ../frontend/package-lock.json}
+        - {action: rebuild, path: ../docker/frontend.Dockerfile}

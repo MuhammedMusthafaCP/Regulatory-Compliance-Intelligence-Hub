@@ -1,0 +1,416 @@
+{
+  "chapters": [
+    {
+      "anchor": "cpt_I",
+      "number": "I",
+      "heading": "CHAPTER I",
+      "title": "General provisions",
+      "sections": [],
+      "articles": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "anchor": "cpt_II",
+      "number": "II",
+      "heading": "CHAPTER II",
+      "title": "Principles",
+      "sections": [],
+      "articles": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    {
+      "anchor": "cpt_III",
+      "number": "III",
+      "heading": "CHAPTER III",
+      "title": "Rights of the data subject",
+      "sections": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "articles": [
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ]
+    },
+    {
+      "anchor": "cpt_IV",
+      "number": "IV",
+      "heading": "CHAPTER IV",
+      "title": "Controller and processor",
+      "sections": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "articles": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    {
+      "anchor": "cpt_V",
+      "number": "V",
+      "heading": "CHAPTER V",
+      "title": "Transfers of personal data to third countries or international organisations",
+      "sections": [],
+      "articles": [
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50
+      ]
+    },
+    {
+      "anchor": "cpt_VI",
+      "number": "VI",
+      "heading": "CHAPTER VI",
+      "title": "Independent supervisory authorities",
+      "sections": [
+        1,
+        2
+      ],
+      "articles": [
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59
+      ]
+    },
+    {
+      "anchor": "cpt_VII",
+      "number": "VII",
+      "heading": "CHAPTER VII",
+      "title": "Cooperation and consistency",
+      "sections": [
+        1,
+        2,
+        3
+      ],
+      "articles": [
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ]
+    },
+    {
+      "anchor": "cpt_VIII",
+      "number": "VIII",
+      "heading": "CHAPTER VIII",
+      "title": "Remedies, liability and penalties",
+      "sections": [],
+      "articles": [
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84
+      ]
+    },
+    {
+      "anchor": "cpt_IX",
+      "number": "IX",
+      "heading": "CHAPTER IX",
+      "title": "Provisions relating to specific processing situations",
+      "sections": [],
+      "articles": [
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91
+      ]
+    },
+    {
+      "anchor": "cpt_X",
+      "number": "X",
+      "heading": "CHAPTER X",
+      "title": "Delegated acts and implementing acts",
+      "sections": [],
+      "articles": [
+        92,
+        93
+      ]
+    },
+    {
+      "anchor": "cpt_XI",
+      "number": "XI",
+      "heading": "CHAPTER XI",
+      "title": "Final provisions",
+      "sections": [],
+      "articles": [
+        94,
+        95,
+        96,
+        97,
+        98,
+        99
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "anchor": "cpt_III.sct_1",
+      "number": 1,
+      "heading": "Section 1",
+      "title": "Transparency and modalities",
+      "chapter": "III",
+      "articles": [
+        12
+      ]
+    },
+    {
+      "anchor": "cpt_III.sct_2",
+      "number": 2,
+      "heading": "Section 2",
+      "title": "Information and access to personal data",
+      "chapter": "III",
+      "articles": [
+        13,
+        14,
+        15
+      ]
+    },
+    {
+      "anchor": "cpt_III.sct_3",
+      "number": 3,
+      "heading": "Section 3",
+      "title": "Rectification and erasure",
+      "chapter": "III",
+      "articles": [
+        16,
+        17,
+        18,
+        19,
+        20
+      ]
+    },
+    {
+      "anchor": "cpt_III.sct_4",
+      "number": 4,
+      "heading": "Section 4",
+      "title": "Right to object and automated individual decision-making",
+      "chapter": "III",
+      "articles": [
+        21,
+        22
+      ]
+    },
+    {
+      "anchor": "cpt_III.sct_5",
+      "number": 5,
+      "heading": "Section 5",
+      "title": "Restrictions",
+      "chapter": "III",
+      "articles": [
+        23
+      ]
+    },
+    {
+      "anchor": "cpt_IV.sct_1",
+      "number": 1,
+      "heading": "Section 1",
+      "title": "General obligations",
+      "chapter": "IV",
+      "articles": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ]
+    },
+    {
+      "anchor": "cpt_IV.sct_2",
+      "number": 2,
+      "heading": "Section 2",
+      "title": "Security of personal data",
+      "chapter": "IV",
+      "articles": [
+        32,
+        33,
+        34
+      ]
+    },
+    {
+      "anchor": "cpt_IV.sct_3",
+      "number": 3,
+      "heading": "Section 3",
+      "title": "Data protection impact assessment and prior consultation",
+      "chapter": "IV",
+      "articles": [
+        35,
+        36
+      ]
+    },
+    {
+      "anchor": "cpt_IV.sct_4",
+      "number": 4,
+      "heading": "Section 4",
+      "title": "Data protection officer",
+      "chapter": "IV",
+      "articles": [
+        37,
+        38,
+        39
+      ]
+    },
+    {
+      "anchor": "cpt_IV.sct_5",
+      "number": 5,
+      "heading": "Section 5",
+      "title": "Codes of conduct and certification",
+      "chapter": "IV",
+      "articles": [
+        40,
+        41,
+        42,
+        43
+      ]
+    },
+    {
+      "anchor": "cpt_VI.sct_1",
+      "number": 1,
+      "heading": "Section 1",
+      "title": "Independent status",
+      "chapter": "VI",
+      "articles": [
+        51,
+        52,
+        53,
+        54
+      ]
+    },
+    {
+      "anchor": "cpt_VI.sct_2",
+      "number": 2,
+      "heading": "Section 2",
+      "title": "Competence, tasks and powers",
+      "chapter": "VI",
+      "articles": [
+        55,
+        56,
+        57,
+        58,
+        59
+      ]
+    },
+    {
+      "anchor": "cpt_VII.sct_1",
+      "number": 1,
+      "heading": "Section 1",
+      "title": "Cooperation",
+      "chapter": "VII",
+      "articles": [
+        60,
+        61,
+        62
+      ]
+    },
+    {
+      "anchor": "cpt_VII.sct_2",
+      "number": 2,
+      "heading": "Section 2",
+      "title": "Consistency",
+      "chapter": "VII",
+      "articles": [
+        63,
+        64,
+        65,
+        66,
+        67
+      ]
+    },
+    {
+      "anchor": "cpt_VII.sct_3",
+      "number": 3,
+      "heading": "Section 3",
+      "title": "European data protection board",
+      "chapter": "VII",
+      "articles": [
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76
+      ]
+    }
+  ]
+}

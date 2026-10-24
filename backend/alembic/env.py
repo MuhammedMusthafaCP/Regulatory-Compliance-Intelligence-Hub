@@ -7,7 +7,8 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
-from app.models.system import Base  # noqa: F401 (ensures models are registered)
+from app.models import regulatory  # noqa: F401 (registers models on Base.metadata)
+from app.models.system import Base
 
 # Alembic Config object, provides access to values within alembic.ini
 config = context.config

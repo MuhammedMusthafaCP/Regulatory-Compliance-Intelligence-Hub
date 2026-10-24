@@ -23,7 +23,7 @@ type DiagnosticState =
   | { phase: "success"; data: HealthResponse; durationMs: number }
   | { phase: "error"; message: string };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:7001";
 
 export default function DashboardPage() {
   const [state, setState] = useState<DiagnosticState>({ phase: "idle" });

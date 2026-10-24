@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api"
     FRONTEND_ORIGIN: str = "http://localhost:4001"
 
-    # Connection pool guardrails (Aiven free tier caps at 20 max connections)
+    # Connection pool guardrails (free-tier Postgres caps connections)
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 5
 
