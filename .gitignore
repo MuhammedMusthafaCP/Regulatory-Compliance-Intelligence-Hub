@@ -21,3 +21,6 @@ VSCode/
 
 # Ingestion virtualenv (torch etc.)
 ingestion/.venv/
+
+# Cached cross-encoder scores (regenerable)
+evaluation/results/.rerank_cache.pkl

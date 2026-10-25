@@ -51,8 +51,8 @@ def is_hit(chunk, gold):
     return True
 
 
-def load_questions():
-    return json.loads(QUESTIONS.read_text())["questions"]
+def load_questions(path=None):
+    return json.loads((path or QUESTIONS).read_text())["questions"]
 
 
 def score_question(q, ranked):
@@ -69,10 +69,10 @@ def score_question(q, ranked):
     return m
 
 
-def check(chunks_path):
+def check(chunks_path, questions_path=None):
     chunks = json.loads(chunks_path.read_text())
     bad = 0
-    for q in load_questions():
+    for q in load_questions(questions_path):
         for g in q["relevant"]:
             hits = [c for c in chunks if is_hit({"type": c["type"], "article_number": c.get("article_number"),
                                                  "paragraph": c.get("paragraph"), "point": c.get("point")}, g)]
@@ -134,9 +134,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true", help="verify gold references against data/parsed/gdpr/chunks.json")
     ap.add_argument("--label", default="baseline_A")
+    ap.add_argument("--questions", type=Path, default=None, help="questions file (default: the dev set)")
     a = ap.parse_args(argv)
     if a.check:
-        return 1 if check(ROOT / "data/parsed/gdpr/chunks.json") else 0
+        return 1 if check(ROOT / "data/parsed/gdpr/chunks.json", a.questions) else 0
     questions = load_questions()
     model = load_model()
     results = asyncio.run(run(model, questions))

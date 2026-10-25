@@ -38,6 +38,7 @@ scipy==1.18.1
 sentence-transformers==5.7.0
 setuptools==84.2.1
 shellingham==1.5.4
+snowballstemmer==3.0.1
 SQLAlchemy==2.0.35
 sympy==1.14.0
 threadpoolctl==3.7.0

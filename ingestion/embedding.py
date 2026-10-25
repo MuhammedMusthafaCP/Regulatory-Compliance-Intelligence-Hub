@@ -5,6 +5,22 @@ MODEL = "BAAI/bge-small-en-v1.5"          # MIT licence, 384-dim, 512-token inpu
 REVISION = "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a"  # Hugging Face commit; weights can't change under us
 DIM = 384
 VARIANT_A = "A"                            # embedded string == chunk text, nothing added
+
+
+def _variant_t(c):
+    """T: article title in front of the text (recitals unchanged)."""
+    return f"{c['article_title']}\n{c['text']}" if c["type"] == "article" else c["text"]
+
+
+def _variant_h(c):
+    """H: chapter | article title | citation header, then the text."""
+    if c["type"] != "article":
+        return f"{c['citation']}\n{c['text']}"
+    return f"{c['chapter_title']} | {c['article_title']} | {c['citation']}\n{c['text']}"
+
+
+# What string is embedded for each variant. Display text and citations are never changed.
+VARIANTS = {"A": lambda c: c["text"], "T": _variant_t, "H": _variant_h}
 # bge-v1.5 recommends this prefix on *queries* (not on passages) for short-question -> passage search
 QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
 
