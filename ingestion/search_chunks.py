@@ -1,8 +1,12 @@
-"""Exact (brute-force) semantic search over the baseline embeddings: a manual smoke test, not the evaluation.
+"""Search the GDPR chunks.
+
+Default: the evaluated pipeline (ADR 0002): candidates -> rerank -> evidence status, with the
+operative articles and the interpretive recitals reported separately.
 
     ingestion/.venv/bin/python -m ingestion.search_chunks "when can I process data without consent?"
-    ... --local      # embed chunks.json in memory and search with numpy (no DB)
-    ... --no-instruction   # embed the query without bge's recommended query prefix
+    ... --json             # machine-readable output
+    ... --baseline         # the original exact dense search over the stored vectors (DB); with
+    ...                    #   --local (no DB) and --no-instruction (skip bge's query prefix) variants
 """
 import argparse
 import asyncio
@@ -53,13 +57,35 @@ def local_search(model, questions, k, prefix):
         show(q, [(chunks[i]["citation"], chunks[i].get("article_title"), chunks[i]["text"], float(scores[i])) for i in top])
 
 
+def pipeline_search(questions, as_json, k):
+    from .pipeline import retrieve_evidence
+    from .retrieval import Corpus, Retriever
+    ret = Retriever(Corpus.from_db(variants=("A",)), load_model())
+    for q in questions:
+        r = retrieve_evidence(ret, q, top_k=k)
+        if as_json:
+            print(json.dumps(r, indent=2, ensure_ascii=False))
+            continue
+        print(f"\nQ: {q}\n  status: {r['status']}  (confidence {r['confidence']})" + (f"\n  note: {r['note']}" if "note" in r else ""))
+        for p in r["provisions"]:
+            print(f"  [operative] {p['citation']:18} {p['score']:.2f}  {p.get('article_title', '')[:50]}\n       {' '.join(p['text'].split())[:130]}…")
+        for c in r["context"]:
+            print(f"  [context]   {c['citation']:18} {c['relevance']:.2f}  {' '.join(c['text'].split())[:100]}…")
+    ret.save_cache()
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("questions", nargs="+")
+    ap.add_argument("--baseline", action="store_true", help="original dense search (no rerank, recitals mixed in)")
+    ap.add_argument("--json", action="store_true")
     ap.add_argument("-k", type=int, default=5)
     ap.add_argument("--local", action="store_true")
     ap.add_argument("--no-instruction", action="store_true")
     a = ap.parse_args(argv)
+    if not a.baseline:
+        pipeline_search(a.questions, a.json, min(a.k, 5) if a.k else 5)
+        return 0
     prefix = "" if a.no_instruction else QUERY_INSTRUCTION
     model = load_model()
     if a.local:
