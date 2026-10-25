@@ -55,7 +55,8 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 ├── data/
 │   ├── raw/gdpr/                 # Untouched EUR-Lex HTML + metadata.json (source of truth)
 │   └── parsed/gdpr/              # Generated JSON: articles, recitals, chunks, validation reports
-├── docs/adr/                     # Architecture decision records (roadmap: 0001)
+├── evaluation/                   # Question sets (dev, held-out, out-of-scope), recital reference, results (baseline preserved)
+├── docs/adr/                     # Architecture decision records (0001 roadmap, 0002 retrieval pipeline)
 └── frontend/
     ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed)
     ├── package.json
@@ -132,9 +133,10 @@ Retrieval-first roadmap: [docs/adr/0001-retrieval-and-fine-tuning-roadmap.md](do
 | Chunk | `python3 -B -m ingestion.chunk_gdpr` (`--max-words 350` default) | `chunks.json`, `chunk_report.json` (670 chunks; every source word lands in exactly one chunk) |
 | Load into Postgres | `backend/.venv/bin/python -m ingestion.load_gdpr` (`--dry-run` to validate only) | `documents` + `chunks` rows (idempotent upsert; run `alembic upgrade head` first) |
 | Embed | `ingestion/.venv/bin/python -m ingestion.embed_chunks` (`--dry-run` for no DB) | `chunk_embeddings` rows, variant `A` = chunk text unchanged, `BAAI/bge-small-en-v1.5` pinned to a commit hash. Only missing/changed chunks are embedded |
-| Search (smoke test) | `ingestion/.venv/bin/python -m ingestion.search_chunks "your question"` (`--local` for no DB) | Top-k chunks by exact cosine similarity |
+| Search | `ingestion/.venv/bin/python -m ingestion.search_chunks "your question"` (`--json`; `--baseline` for the original dense search) | Evaluated pipeline ([ADR 0002](docs/adr/0002-retrieval-pipeline-and-abstention.md)): operative articles, separate recital context, and an evidence status (`supported` / `weak_evidence` / `no_basis`) |
+| Evaluate | `ingestion/.venv/bin/python -m ingestion.experiments release --heldout` | Baseline vs chosen pipeline on the dev and held-out question sets in `evaluation/` |
 
-One-time setup for the embedding stage: `/opt/homebrew/bin/python3.12 -m venv ingestion/.venv && ingestion/.venv/bin/pip install -r ingestion/requirements.txt` (first run downloads ~130 MB of model weights). The parse and chunk stages use only the standard library.
+Search and evaluation also download two more free Hugging Face models on first use (a reranker, ~0.7 GB) and run it on the Apple GPU when available (`RERANK_DEVICE=cpu` to override; about 10x slower). Set `HF_HUB_OFFLINE=1` once the models are cached to avoid network stalls. One-time setup for the embedding stage: `/opt/homebrew/bin/python3.12 -m venv ingestion/.venv && ingestion/.venv/bin/pip install -r ingestion/requirements.txt` (first run downloads ~130 MB of model weights). The parse and chunk stages use only the standard library.
 
 Chunking rules: Article 4 gets one chunk per definition; a paragraph up to 350 words is one chunk (lead-in, points and trailing text together); longer paragraphs split into one chunk per point with the lead-in prepended; each recital is one chunk. Text is stored exactly as published (curly quotes kept; only whitespace is normalised). Data source licence: EUR-Lex legal text is reusable under Commission Decision 2011/833/EU, attribution "© European Union"; only the Official Journal version is authentic.
 
