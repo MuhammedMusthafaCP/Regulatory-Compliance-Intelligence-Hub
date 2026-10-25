@@ -1,0 +1,650 @@
+{
+  "_about": "Draft evaluation set for GDPR retrieval. Drafted by an AI assistant, NOT yet reviewed by a human. 'relevant' lists the clauses that answer the question (article, optional paragraph, optional point); a chunk matches if its article equals and its paragraph/point are consistent. 'answerable:false' questions have no relevant clause and are for the later refusal tests.",
+  "questions": [
+    {
+      "id": "q01",
+      "category": "definition",
+      "question": "What does the GDPR mean by personal data?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(1)"
+        }
+      ]
+    },
+    {
+      "id": "q02",
+      "category": "definition",
+      "question": "What is pseudonymisation?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(5)"
+        }
+      ]
+    },
+    {
+      "id": "q03",
+      "category": "definition",
+      "question": "Who counts as a controller?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(7)"
+        }
+      ]
+    },
+    {
+      "id": "q04",
+      "category": "definition",
+      "question": "What is a processor under the regulation?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(8)"
+        }
+      ]
+    },
+    {
+      "id": "q05",
+      "category": "definition",
+      "question": "How is consent defined?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(11)"
+        }
+      ]
+    },
+    {
+      "id": "q06",
+      "category": "definition",
+      "question": "What is a personal data breach?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(12)"
+        }
+      ]
+    },
+    {
+      "id": "q07",
+      "category": "definition",
+      "question": "What is meant by profiling?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(4)"
+        }
+      ]
+    },
+    {
+      "id": "q08",
+      "category": "definition",
+      "question": "What does processing of personal data cover?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(2)"
+        }
+      ]
+    },
+    {
+      "id": "q09",
+      "category": "definition",
+      "question": "What is a filing system?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(6)"
+        }
+      ]
+    },
+    {
+      "id": "q10",
+      "category": "principles",
+      "question": "What are the basic principles for processing personal data?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 5,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q11",
+      "category": "principles",
+      "question": "Who has to be able to show that the principles are being followed?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 5,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "q12",
+      "category": "lawfulness",
+      "question": "On what legal grounds can an organisation process personal data?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 6,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q13",
+      "category": "lawfulness",
+      "question": "When can I process someone's data without their consent?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 6,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q14",
+      "category": "lawfulness",
+      "question": "What conditions must consent meet to be valid?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 7
+        }
+      ]
+    },
+    {
+      "id": "q15",
+      "category": "lawfulness",
+      "question": "Can a person take back their consent after giving it?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 7,
+          "paragraph": "3"
+        }
+      ]
+    },
+    {
+      "id": "q16",
+      "category": "lawfulness",
+      "question": "At what age can a child consent to online services?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 8,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q17",
+      "category": "lawfulness",
+      "question": "Is it allowed to process data about someone's health or religion?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 9,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q18",
+      "category": "lawfulness",
+      "question": "Which exceptions allow processing of special categories of data?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 9,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "q19",
+      "category": "lawfulness",
+      "question": "Can data about criminal convictions be processed?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 10
+        }
+      ]
+    },
+    {
+      "id": "q20",
+      "category": "rights",
+      "question": "What information must people be given when their data is collected from them directly?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 13
+        }
+      ]
+    },
+    {
+      "id": "q21",
+      "category": "rights",
+      "question": "What must I tell people if I got their data from someone else?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 14
+        }
+      ]
+    },
+    {
+      "id": "q22",
+      "category": "rights",
+      "question": "Can individuals ask to see the data a company holds about them?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 15,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q23",
+      "category": "rights",
+      "question": "How can someone get incorrect data about them fixed?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 16
+        }
+      ]
+    },
+    {
+      "id": "q24",
+      "category": "rights",
+      "question": "When can someone have their personal data deleted?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 17,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q25",
+      "category": "rights",
+      "question": "What is the right to be forgotten?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 17
+        }
+      ]
+    },
+    {
+      "id": "q26",
+      "category": "rights",
+      "question": "Can a person ask a company to pause using their data while its accuracy is checked?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 18,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q27",
+      "category": "rights",
+      "question": "Can I get my data in a format I can move to another service?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 20
+        }
+      ]
+    },
+    {
+      "id": "q28",
+      "category": "rights",
+      "question": "Can people object to their data being used for direct marketing?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 21
+        }
+      ]
+    },
+    {
+      "id": "q29",
+      "category": "rights",
+      "question": "Can an important decision about me be made entirely by an algorithm?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 22
+        }
+      ]
+    },
+    {
+      "id": "q30",
+      "category": "obligations",
+      "question": "What must a controller do to ensure and prove that processing complies?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 24
+        }
+      ]
+    },
+    {
+      "id": "q31",
+      "category": "obligations",
+      "question": "What is data protection by design and by default?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 25
+        }
+      ]
+    },
+    {
+      "id": "q32",
+      "category": "obligations",
+      "question": "When are two organisations joint controllers?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 26
+        }
+      ]
+    },
+    {
+      "id": "q33",
+      "category": "obligations",
+      "question": "What must a contract between a controller and a processor include?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 28,
+          "paragraph": "3"
+        }
+      ]
+    },
+    {
+      "id": "q34",
+      "category": "obligations",
+      "question": "Does an organisation need to keep records of its processing activities?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 30
+        }
+      ]
+    },
+    {
+      "id": "q35",
+      "category": "security",
+      "question": "What security measures must be in place to protect personal data?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 32
+        }
+      ]
+    },
+    {
+      "id": "q36",
+      "category": "security",
+      "question": "How quickly must a data breach be reported to the authority?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 33,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q37",
+      "category": "security",
+      "question": "When must individuals be told about a data breach?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 34,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q38",
+      "category": "dpia_dpo",
+      "question": "When is a data protection impact assessment required?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 35
+        }
+      ]
+    },
+    {
+      "id": "q39",
+      "category": "dpia_dpo",
+      "question": "When must a company appoint a data protection officer?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 37,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q40",
+      "category": "dpia_dpo",
+      "question": "What are the tasks of the data protection officer?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 39,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q41",
+      "category": "transfers",
+      "question": "Can personal data be sent outside the EU?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 44
+        },
+        {
+          "article": 45,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q42",
+      "category": "transfers",
+      "question": "What safeguards allow a transfer to a country without an adequacy decision?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 46
+        }
+      ]
+    },
+    {
+      "id": "q43",
+      "category": "transfers",
+      "question": "In which special situations can data be transferred without adequacy or safeguards?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 49,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q44",
+      "category": "enforcement",
+      "question": "How big can fines be for the most serious violations?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 83,
+          "paragraph": "5"
+        }
+      ]
+    },
+    {
+      "id": "q45",
+      "category": "enforcement",
+      "question": "What are the fines for less serious infringements such as controller obligations?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 83,
+          "paragraph": "4"
+        }
+      ]
+    },
+    {
+      "id": "q46",
+      "category": "enforcement",
+      "question": "Can individuals complain to a regulator about how their data is used?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 77,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q47",
+      "category": "enforcement",
+      "question": "Can someone claim compensation for damage caused by unlawful processing?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 82,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q48",
+      "category": "enforcement",
+      "question": "What powers do supervisory authorities have?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 58
+        }
+      ]
+    },
+    {
+      "id": "q49",
+      "category": "scope",
+      "question": "Does the GDPR apply to companies based outside the EU?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 3,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "q50",
+      "category": "scope",
+      "question": "Does the regulation cover purely personal or household activities?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 2,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "q51",
+      "category": "specific",
+      "question": "Can countries add their own rules for employee data at work?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 88,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "q52",
+      "category": "specific",
+      "question": "What special rules apply to processing for scientific research or statistics?",
+      "answerable": true,
+      "relevant": [
+        {
+          "article": 89,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "u01",
+      "category": "out_of_scope",
+      "question": "What is the penalty for speeding in Germany?",
+      "answerable": false,
+      "relevant": []
+    },
+    {
+      "id": "u02",
+      "category": "out_of_scope",
+      "question": "How do I file my income tax return in France?",
+      "answerable": false,
+      "relevant": []
+    },
+    {
+      "id": "u03",
+      "category": "out_of_scope",
+      "question": "What does the California Consumer Privacy Act require businesses to do?",
+      "answerable": false,
+      "relevant": []
+    },
+    {
+      "id": "u04",
+      "category": "out_of_scope",
+      "question": "What are the HIPAA rules for medical records in the United States?",
+      "answerable": false,
+      "relevant": []
+    },
+    {
+      "id": "u05",
+      "category": "out_of_scope",
+      "question": "Is Bitcoin legal tender in the European Union?",
+      "answerable": false,
+      "relevant": []
+    }
+  ]
+}
