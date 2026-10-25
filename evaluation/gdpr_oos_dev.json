@@ -1,0 +1,117 @@
+{
+  "_about": "Extra out-of-scope / insufficient-evidence questions used to CALIBRATE abstention together with the dev set (gdpr_questions.json). No answerable questions here.",
+  "questions": [
+    {
+      "id": "do01",
+      "category": "oos",
+      "question": "How do I apply for a work visa in Canada?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do02",
+      "category": "oos",
+      "question": "What are the tax rules for freelancers in the Netherlands?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do03",
+      "category": "oos",
+      "question": "What are the safety requirements for toys sold in the EU?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do04",
+      "category": "oos",
+      "question": "How does the Cyber Resilience Act affect software vendors?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do05",
+      "category": "oos",
+      "question": "What are a consumer's rights when returning an online purchase?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do06",
+      "category": "oos",
+      "question": "What does the ePrivacy Directive say about electronic marketing messages?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do07",
+      "category": "oos",
+      "question": "Which law governs the approval of medical devices in the EU?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "do08",
+      "category": "oos",
+      "question": "How long can we keep job applicants' CVs?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do09",
+      "category": "oos",
+      "question": "Which security certification must a cloud provider hold?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do10",
+      "category": "oos",
+      "question": "What is the maximum compensation a person can receive after a breach?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do11",
+      "category": "oos",
+      "question": "Do I need a DPO if I have 50 employees?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do12",
+      "category": "oos",
+      "question": "Is my company GDPR compliant?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do13",
+      "category": "oos",
+      "question": "What is the best technique for anonymising a dataset?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "do14",
+      "category": "oos",
+      "question": "How many people make processing large scale?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    }
+  ]
+}

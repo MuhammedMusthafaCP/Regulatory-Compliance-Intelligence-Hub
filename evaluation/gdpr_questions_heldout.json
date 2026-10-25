@@ -1,0 +1,662 @@
+{
+  "_about": "HELD-OUT test set. Written after the dev set with different phrasing and extra clauses. Used to confirm final choices only; never tune on it. AI-drafted, gold checked against chunk text. kind: answerable | out_of_scope (not GDPR) | insufficient (GDPR-related but the text does not answer it).",
+  "questions": [
+    {
+      "id": "h01",
+      "category": "scope",
+      "question": "I run a webshop in Brazil that sells to customers in Germany. Do I have to follow EU data protection rules?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 3,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "h02",
+      "category": "lawfulness",
+      "question": "What are the legal bases a business can rely on to use personal information?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 6,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h03",
+      "category": "lawfulness",
+      "question": "A user withdrew their consent. Does everything we did with their data before that become unlawful?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 7,
+          "paragraph": "3"
+        }
+      ]
+    },
+    {
+      "id": "h04",
+      "category": "lawfulness",
+      "question": "Our app is aimed at teenagers. How old must they be before they can agree to data processing themselves?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 8,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h05",
+      "category": "security",
+      "question": "How long do we have to tell the regulator after finding out our database was hacked?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 33,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h06",
+      "category": "rights",
+      "question": "A person asks us to erase everything we have on them. In which cases must we do it?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 17,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h07",
+      "category": "rights",
+      "question": "Do I have to give someone a copy of their personal data if they ask for it?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 15
+        }
+      ]
+    },
+    {
+      "id": "h08",
+      "category": "enforcement",
+      "question": "What is the maximum fine under the GDPR for the worst infringements?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 83,
+          "paragraph": "5"
+        }
+      ]
+    },
+    {
+      "id": "h09",
+      "category": "lawfulness",
+      "question": "May a hospital process patients' health data?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 9,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "h10",
+      "category": "obligations",
+      "question": "What does it mean that a processor may only act on documented instructions?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 28,
+          "paragraph": "3"
+        }
+      ]
+    },
+    {
+      "id": "h11",
+      "category": "dpia_dpo",
+      "question": "Which organisations must have a data protection officer?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 37,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h12",
+      "category": "dpia_dpo",
+      "question": "Is a risk assessment necessary before launching large-scale monitoring of a publicly accessible area?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 35
+        }
+      ]
+    },
+    {
+      "id": "h13",
+      "category": "enforcement",
+      "question": "What can I do if a company misuses my data and ignores my complaints?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 77,
+          "paragraph": "1"
+        },
+        {
+          "article": 79,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h14",
+      "category": "definition",
+      "question": "What is the difference between anonymous and pseudonymised data?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(5)"
+        }
+      ]
+    },
+    {
+      "id": "h15",
+      "category": "enforcement",
+      "question": "Are the fines the same size for every kind of violation?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 83,
+          "paragraph": "4"
+        },
+        {
+          "article": 83,
+          "paragraph": "5"
+        }
+      ]
+    },
+    {
+      "id": "h16",
+      "category": "lawfulness",
+      "question": "How must a consent request look when it is part of a written declaration that also covers other matters?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 7,
+          "paragraph": "2"
+        }
+      ]
+    },
+    {
+      "id": "h17",
+      "category": "obligations",
+      "question": "Does a small business have to keep a register of its processing activities?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 30
+        }
+      ]
+    },
+    {
+      "id": "h18",
+      "category": "security",
+      "question": "How must a company document data breaches internally?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 33,
+          "paragraph": "5"
+        }
+      ]
+    },
+    {
+      "id": "h19",
+      "category": "transfers",
+      "question": "Can personal data be transferred to a country outside the EU such as the United States?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 45
+        },
+        {
+          "article": 46
+        }
+      ]
+    },
+    {
+      "id": "h20",
+      "category": "rights",
+      "question": "What rules apply to automated profiling that has legal effects on a person?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 22
+        }
+      ]
+    },
+    {
+      "id": "h21",
+      "category": "enforcement",
+      "question": "Which authority leads when a company operates in several EU countries?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 56,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h22",
+      "category": "obligations",
+      "question": "Do non-EU companies need to appoint a representative in the Union?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 27,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h23",
+      "category": "transfers",
+      "question": "What are binding corporate rules?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(20)"
+        },
+        {
+          "article": 47,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h24",
+      "category": "dpia_dpo",
+      "question": "When must a company consult the authority before starting a risky processing operation?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 36,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h25",
+      "category": "obligations",
+      "question": "What are codes of conduct and who can draw them up?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 40
+        }
+      ]
+    },
+    {
+      "id": "h26",
+      "category": "obligations",
+      "question": "Can organisations obtain a certification to demonstrate that they comply?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 42,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h27",
+      "category": "obligations",
+      "question": "How can an organisation show that its technical and organisational measures are appropriate?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 24
+        }
+      ]
+    },
+    {
+      "id": "h28",
+      "category": "enforcement",
+      "question": "What is the role of the European Data Protection Board?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 68
+        },
+        {
+          "article": 70,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h29",
+      "category": "enforcement",
+      "question": "Can a consumer organisation file a complaint on someone's behalf?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 80,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h30",
+      "category": "enforcement",
+      "question": "Can I take a supervisory authority's decision to court?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 78,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h31",
+      "category": "specific",
+      "question": "How does the regulation balance data protection with freedom of expression for journalists?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 85,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h32",
+      "category": "specific",
+      "question": "Are there special rules for using a national identification number?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 87
+        }
+      ]
+    },
+    {
+      "id": "h33",
+      "category": "specific",
+      "question": "Do churches and religious associations have their own data protection rules?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 91,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h34",
+      "category": "definition",
+      "question": "What does main establishment mean?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(16)"
+        }
+      ]
+    },
+    {
+      "id": "h35",
+      "category": "definition",
+      "question": "What is a supervisory authority?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(21)"
+        }
+      ]
+    },
+    {
+      "id": "h36",
+      "category": "definition",
+      "question": "What counts as cross-border processing?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(23)"
+        }
+      ]
+    },
+    {
+      "id": "h37",
+      "category": "definition",
+      "question": "What is biometric data?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 4,
+          "point": "(14)"
+        }
+      ]
+    },
+    {
+      "id": "h38",
+      "category": "rights",
+      "question": "In what form must information to data subjects be communicated?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 12,
+          "paragraph": "1"
+        }
+      ]
+    },
+    {
+      "id": "h39",
+      "category": "rights",
+      "question": "How long do we have to respond to a data subject's request?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 12,
+          "paragraph": "3"
+        }
+      ]
+    },
+    {
+      "id": "h40",
+      "category": "rights",
+      "question": "Must recipients be informed when data has been corrected or deleted?",
+      "answerable": true,
+      "kind": "answerable",
+      "relevant": [
+        {
+          "article": 19
+        }
+      ]
+    },
+    {
+      "id": "ho01",
+      "category": "oos",
+      "question": "How many days of annual leave am I entitled to in Spain?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho02",
+      "category": "oos",
+      "question": "What is the VAT rate on books in Italy?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho03",
+      "category": "oos",
+      "question": "How do I register a trademark in the European Union?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho04",
+      "category": "oos",
+      "question": "Can my landlord raise the rent in the middle of a lease?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho05",
+      "category": "oos",
+      "question": "What emission standards apply to new cars in the EU?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho06",
+      "category": "oos",
+      "question": "What obligations does the Digital Services Act place on very large online platforms?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho07",
+      "category": "oos",
+      "question": "How does the EU AI Act classify high-risk AI systems?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho08",
+      "category": "oos",
+      "question": "What are the security requirements under the NIS2 Directive?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho09",
+      "category": "oos",
+      "question": "What does Brazil's LGPD say about consent?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho10",
+      "category": "oos",
+      "question": "What are the cookie banner rules for websites?",
+      "answerable": false,
+      "kind": "out_of_scope",
+      "relevant": []
+    },
+    {
+      "id": "ho11",
+      "category": "oos",
+      "question": "For how many months may we keep CCTV footage?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "ho12",
+      "category": "oos",
+      "question": "Is Google Analytics compliant with the GDPR?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "ho13",
+      "category": "oos",
+      "question": "What exact fine will my company get for losing a laptop with customer data?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "ho14",
+      "category": "oos",
+      "question": "Which encryption algorithm does the GDPR require?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "ho15",
+      "category": "oos",
+      "question": "What is the retention period for payroll records?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    },
+    {
+      "id": "ho16",
+      "category": "oos",
+      "question": "Can you confirm whether our new customer database is GDPR compliant?",
+      "answerable": false,
+      "kind": "insufficient",
+      "relevant": []
+    }
+  ]
+}
