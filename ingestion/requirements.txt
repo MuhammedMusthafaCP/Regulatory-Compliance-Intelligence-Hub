@@ -1,9 +1,10 @@
 # Dependencies for the ingestion/embedding scripts (kept out of backend/requirements.txt:
 # torch is multi-GB and the API container does not need it). Full pinned set: requirements.lock.txt
 # Setup: python3.12 -m venv ingestion/.venv && ingestion/.venv/bin/pip install -r ingestion/requirements.txt
-sentence-transformers==5.1.1
+sentence-transformers==5.7.0
+transformers==5.18.0  # >=5.10.0 fixes CVE-2026-9856/4372/5241
 asyncpg==0.29.0
 SQLAlchemy==2.0.35
 pgvector==0.3.4
-python-dotenv==1.0.1
+python-dotenv==1.2.3
 greenlet==3.1.1

@@ -12,7 +12,8 @@ QUERY_INSTRUCTION = "Represent this sentence for searching relevant passages: "
 def load_model():
     from sentence_transformers import SentenceTransformer
     model = SentenceTransformer(MODEL, revision=REVISION, device="cpu")
-    assert model.get_sentence_embedding_dimension() == DIM, "unexpected embedding dimension"
+    dim = getattr(model, "get_embedding_dimension", model.get_sentence_embedding_dimension)()
+    assert dim == DIM, "unexpected embedding dimension"
     return model
 
 
