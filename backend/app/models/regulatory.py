@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     BigInteger,
     DateTime,
@@ -8,6 +9,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -95,4 +97,36 @@ class Chunk(Base):
         Index("ix_chunks_document_ordinal", "document_id", "ordinal"),
         Index("ix_chunks_document_article", "document_id", "article_number"),
         Index("ix_chunks_type", "type"),
+    )
+
+
+class ChunkEmbedding(Base):
+    """One vector per (chunk, model, model revision, text variant).
+
+    Kept separate from ``chunks`` so several models/variants (baseline, header
+    variant, fine-tuned model) can sit side by side and be compared. All vectors
+    here are 384-dimensional (bge-small family); a model with another dimension
+    needs its own table.
+    """
+
+    __tablename__ = "chunk_embeddings"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    chunk_id: Mapped[int] = mapped_column(
+        ForeignKey("chunks.id", ondelete="CASCADE"), nullable=False
+    )
+    model: Mapped[str] = mapped_column(String(100), nullable=False)
+    model_revision: Mapped[str] = mapped_column(String(64), nullable=False)
+    variant: Mapped[str] = mapped_column(String(10), nullable=False)
+    embedded_text_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(Vector(384), nullable=False)
+    embedded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "chunk_id", "model", "model_revision", "variant",
+            name="uq_chunk_embeddings_chunk_model_variant",
+        ),
     )
