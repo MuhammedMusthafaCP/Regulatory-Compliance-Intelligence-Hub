@@ -41,12 +41,21 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 │   ├── alembic.ini               # URL left blank; injected from settings at runtime
 │   ├── alembic/
 │   │   ├── env.py                # Async Alembic env, reads DATABASE_URL from app settings
-│   │   └── versions/             # Migrations (currently: create health_checks + pgvector extension)
+│   │   └── versions/             # Migrations: health_checks + pgvector; documents/chunks; chunk_embeddings
 │   └── app/
 │       ├── main.py               # FastAPI app, CORS, `/` and `/api/health` routes
 │       ├── core/config.py        # Settings (pydantic-settings, loads backend/.env)
 │       ├── db/session.py         # Async engine (capped pool) + `get_db` dependency
-│       └── models/system.py      # SQLAlchemy `Base` and `HealthCheck` model
+│       └── models/
+│           ├── system.py         # SQLAlchemy `Base` and `HealthCheck` model
+│           └── regulatory.py     # `Document`, `Chunk`, `ChunkEmbedding` models
+├── ingestion/                    # GDPR pipeline: parse -> chunk -> load -> embed -> search (see "Data pipeline")
+│   ├── requirements.txt          # Own virtualenv (torch); lock file alongside
+│   └── *.py
+├── data/
+│   ├── raw/gdpr/                 # Untouched EUR-Lex HTML + metadata.json (source of truth)
+│   └── parsed/gdpr/              # Generated JSON: articles, recitals, chunks, validation reports
+├── docs/adr/                     # Architecture decision records (roadmap: 0001)
 └── frontend/
     ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed)
     ├── package.json
@@ -92,16 +101,16 @@ FastAPI's interactive docs are served at http://localhost:7001/docs.
 
 ### Database
 
-One table exists so far, `health_checks` ([backend/app/models/system.py](backend/app/models/system.py)):
+Tables ([backend/app/models/](backend/app/models/)):
 
-| Column | Type |
+| Table | Purpose |
 | --- | --- |
-| `id` | integer, primary key, autoincrement |
-| `status` | varchar(50), not null |
-| `test_vector` | `vector(3)`, not null |
-| `created_at` | timestamptz, server default `now()` |
+| `health_checks` | Written by `/api/health` on every call (`id`, `status`, `test_vector vector(3)`, `created_at`) |
+| `documents` | One row per regulation (GDPR): CELEX id, source URL, retrieval date, source SHA-256, chunk size limit used |
+| `chunks` | One row per retrieval unit (670 for GDPR): `chunk_id`, `citation` (e.g. "Article 9(2)(a)"), chapter/section/article/paragraph/point, `type` (article or recital), `text`, source anchor + URL, `cross_refs` (JSONB), `text_sha256` |
+| `chunk_embeddings` | One `vector(384)` per (chunk, model, model revision, variant). Model name and pinned revision are stored with every vector. No vector index yet: search is exact |
 
-The initial migration runs `CREATE EXTENSION IF NOT EXISTS vector`, so the database user needs permission to create that extension (or it must already be enabled).
+The first migration runs `CREATE EXTENSION IF NOT EXISTS vector`, so the database user needs permission to create that extension (or it must already be enabled).
 
 Commands (run from `backend/`, with the virtualenv active unless noted):
 
@@ -112,6 +121,22 @@ Commands (run from `backend/`, with the virtualenv active unless noted):
 | `alembic downgrade -1` | Roll back the last migration |
 | `alembic revision --autogenerate -m "message"` | Create a migration from model changes (import new models in `alembic/env.py` so they're registered) |
 | `make dev` | Run the API with reload on port 7001. **Requires the virtualenv at `backend/.venv`**, since the Makefile calls `.venv/bin/uvicorn`. |
+
+## Data pipeline (GDPR)
+
+Retrieval-first roadmap: [docs/adr/0001-retrieval-and-fine-tuning-roadmap.md](docs/adr/0001-retrieval-and-fine-tuning-roadmap.md). Each stage is deterministic and re-runnable from the raw EUR-Lex HTML in `data/raw/gdpr/` (see its README for fetch rules: EUR-Lex robots.txt asks for a 10 s crawl delay, and plain `curl` is blocked by a WAF, so a real browser is needed).
+
+| Stage | Command (from the repo root) | Output |
+| --- | --- | --- |
+| Parse + validate | `python3 -B -m ingestion.parse_gdpr` | `data/parsed/gdpr/{articles,recitals,structure,footnotes}.json`, `parse_report.json` (99 articles, 173 recitals, coverage check; exits non-zero on failure) |
+| Chunk | `python3 -B -m ingestion.chunk_gdpr` (`--max-words 350` default) | `chunks.json`, `chunk_report.json` (670 chunks; every source word lands in exactly one chunk) |
+| Load into Postgres | `backend/.venv/bin/python -m ingestion.load_gdpr` (`--dry-run` to validate only) | `documents` + `chunks` rows (idempotent upsert; run `alembic upgrade head` first) |
+| Embed | `ingestion/.venv/bin/python -m ingestion.embed_chunks` (`--dry-run` for no DB) | `chunk_embeddings` rows, variant `A` = chunk text unchanged, `BAAI/bge-small-en-v1.5` pinned to a commit hash. Only missing/changed chunks are embedded |
+| Search (smoke test) | `ingestion/.venv/bin/python -m ingestion.search_chunks "your question"` (`--local` for no DB) | Top-k chunks by exact cosine similarity |
+
+One-time setup for the embedding stage: `/opt/homebrew/bin/python3.12 -m venv ingestion/.venv && ingestion/.venv/bin/pip install -r ingestion/requirements.txt` (first run downloads ~130 MB of model weights). The parse and chunk stages use only the standard library.
+
+Chunking rules: Article 4 gets one chunk per definition; a paragraph up to 350 words is one chunk (lead-in, points and trailing text together); longer paragraphs split into one chunk per point with the lead-in prepended; each recital is one chunk. Text is stored exactly as published (curly quotes kept; only whitespace is normalised). Data source licence: EUR-Lex legal text is reusable under Commission Decision 2011/833/EU, attribution "© European Union"; only the Official Journal version is authentic.
 
 ## Environment Configuration
 

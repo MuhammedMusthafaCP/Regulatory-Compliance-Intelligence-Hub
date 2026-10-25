@@ -1,6 +1,6 @@
 # ADR 0001: Retrieval-first roadmap with embedding fine-tuning
 
-- **Status:** Proposed (update to Accepted once Step 1 is started)
+- **Status:** Accepted (Steps 1-2 done; Step 4 evaluation set is being built before Step 3, see Progress notes)
 - **Date:** 2026-10-24
 - **Builds on:** Phase 1 foundation ([BRD](../../requirement-docs/brd-1.md))
 
@@ -25,13 +25,21 @@ Reasoning:
 
 Each step ends with something you can run and inspect. Tick the box when done.
 
-- [ ] **Step 1: Ingest and chunk.** Get the GDPR text (EUR-Lex), parse it by article/clause, chunk it, and keep metadata for citations (regulation, article, page, URL). Add `documents` and `chunks` tables via Alembic.
-- [ ] **Step 2: Embed and store.** Embed chunks with a free baseline model (e.g. `BAAI/bge-small-en-v1.5` or `all-MiniLM-L6-v2`). Replace the `vector(3)` assumption with the model's real dimension for the new table. Store the model name and version with each vector.
+- [x] **Step 1: Ingest and chunk.** Get the GDPR text (EUR-Lex), parse it by article/clause, chunk it, and keep metadata for citations (regulation, article, page, URL). Add `documents` and `chunks` tables via Alembic. *(Done: 670 chunks, 350-word limit.)*
+- [x] **Step 2: Embed and store.** Embed chunks with a free baseline model (e.g. `BAAI/bge-small-en-v1.5` or `all-MiniLM-L6-v2`). Replace the `vector(3)` assumption with the model's real dimension for the new table. Store the model name and version with each vector. *(Done: `bge-small-en-v1.5`, pinned revision, separate `chunk_embeddings` table.)*
 - [ ] **Step 3: Search and index.** Exact (brute-force) search first and inspect results by hand. Then add an HNSW index (and compare IVFFlat). Compare cosine, L2 and inner product. Use `EXPLAIN ANALYZE` to confirm index use. Expose a simple search page showing retrieved clauses and scores.
 - [ ] **Step 4: Evaluate the baseline.** Build a small question set (50–200) with known correct clauses. Measure recall@k and MRR. Measure ANN recall against exact search, and latency against recall.
 - [ ] **Step 5: Fine-tune the embedding model.** Generate synthetic question-chunk pairs with a free LLM, review a sample by hand, then fine-tune on a free Colab/Kaggle GPU.
 - [ ] **Step 6: Re-evaluate and decide.** Re-run the same evaluation. Keep the fine-tuned model only if the numbers improve. Re-embed all chunks if the model changes.
 - [ ] **Later:** hybrid search (vector + Postgres full-text, rank fusion), reranker (cross-encoder), LLM answers with verified citations and refusal when sources are weak, policy gap analysis, PDF/CSV export, authentication and roles.
+
+## Progress notes
+
+- **2026-10-25: order changed.** The evaluation set (Step 4) is built before Step 3, because comparing distance metrics and index types needs a scoreboard. Step 3 is judged with it.
+- **Chunking decision:** paragraph-level chunks, split into points only above 350 words (200 was tested; it split Article 6(1) and 9 other paragraphs that read better whole). Article 4 is one chunk per definition. The limit fits `bge-small` (512 tokens) but not `all-MiniLM-L6-v2` (256).
+- **Embedding decision:** variant A (chunk text only) is the baseline. Variant C (regulation/chapter/article-title header + text) is the first experiment, to be judged by the evaluation. Vectors live in `chunk_embeddings` so variants and the later fine-tuned model sit side by side.
+- **Observation to test, not a conclusion:** in a 5-question smoke test, recitals outranked the binding articles (e.g. Recitals 43/42/69 before Article 6(1)). The evaluation should measure this with and without recitals.
+- **Known limits:** Recital 143 exceeds 512 tokens and is truncated when embedded; six long paragraphs (Art. 9(2), 28(3), 47(2), 49(1), 57(1), 70(1)) are still split into point chunks; the text is the original 2016 Official Journal version without later corrigenda.
 
 ## What each step teaches
 
