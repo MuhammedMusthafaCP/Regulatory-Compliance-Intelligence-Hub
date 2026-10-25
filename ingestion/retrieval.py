@@ -10,7 +10,6 @@ Articles (the operative law) and recitals (interpretive context) are kept in sep
 import asyncio
 import hashlib
 import json
-import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -25,7 +24,7 @@ from .lexical import BM25
 from .load_gdpr import database_url
 
 RRF_K = 60
-CE_CACHE = Path(__file__).resolve().parent.parent / "evaluation/results/.rerank_cache.pkl"  # git-ignored
+CE_CACHE = Path(__file__).resolve().parent.parent / "evaluation/results/.rerank_cache.json"  # git-ignored
 
 
 @dataclass(frozen=True)
@@ -101,17 +100,17 @@ class Retriever:
         self.c, self.model = corpus, model
         self._qcache, self._ce = {}, {}
         try:
-            self._ce_scores = pickle.loads(CE_CACHE.read_bytes())
+            self._ce_scores = json.loads(CE_CACHE.read_text())
         except Exception:
-            self._ce_scores = {}   # (reranker key, query, passage hash) -> score
+            self._ce_scores = {}   # "reranker|query|passage sha256" -> score
 
     def save_cache(self):
         CE_CACHE.parent.mkdir(parents=True, exist_ok=True)
-        CE_CACHE.write_bytes(pickle.dumps(self._ce_scores))
+        CE_CACHE.write_text(json.dumps(self._ce_scores))
 
     def ce_scores(self, key, q, texts):
         """Cross-encoder scores, computed once per (reranker, query, passage) and cached on disk."""
-        keys = [(key, q, hashlib.md5(t.encode()).hexdigest()) for t in texts]
+        keys = [f"{key}|{q}|{hashlib.sha256(t.encode()).hexdigest()}" for t in texts]
         missing = [i for i, k in enumerate(keys) if k not in self._ce_scores]
         if missing:
             new = self.cross_encoder(key).predict([(q, texts[i]) for i in missing], show_progress_bar=False)

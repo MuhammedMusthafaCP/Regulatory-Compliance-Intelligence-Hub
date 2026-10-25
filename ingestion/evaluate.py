@@ -30,14 +30,16 @@ RESULTS = ROOT / "evaluation/results"
 KS = (1, 3, 5, 10)
 TOP = 10
 
-SQL = {
-    scope: sql(f"""
+_SELECT = """
     SELECT c.type, c.article_number, c.paragraph, c.point, c.citation,
            1 - (e.embedding <=> CAST(:q AS vector)) AS score
     FROM chunk_embeddings e JOIN chunks c ON c.id = e.chunk_id
-    WHERE e.model = :m AND e.model_revision = :r AND e.variant = :v {extra}
-    ORDER BY e.embedding <=> CAST(:q AS vector) LIMIT {TOP}""")
-    for scope, extra in (("all", ""), ("articles", "AND c.type = 'article'"))
+    WHERE e.model = :m AND e.model_revision = :r AND e.variant = :v"""
+_ORDER = """
+    ORDER BY e.embedding <=> CAST(:q AS vector) LIMIT 10"""
+SQL = {
+    "all": sql(_SELECT + _ORDER),
+    "articles": sql(_SELECT + " AND c.type = 'article'" + _ORDER),
 }
 
 

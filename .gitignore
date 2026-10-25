@@ -23,4 +23,4 @@ VSCode/
 ingestion/.venv/
 
 # Cached cross-encoder scores (regenerable)
-evaluation/results/.rerank_cache.pkl
+evaluation/results/.rerank_cache.json
