@@ -203,7 +203,16 @@ Everything lives in the root [Makefile](Makefile) and [docker/](docker/) (compos
 
 ## Testing
 
-There is no automated test suite yet (no backend or frontend tests, and no linter configuration). `npm run lint` is defined in `package.json` but ESLint is not installed or configured, so it isn't usable as-is. For now, the end-to-end check is the diagnostic described in step 4 above. For a quick type check of the frontend, run `npx tsc --noEmit` from `frontend/`.
+**Ingestion and retrieval pipeline** (`ingestion/tests/`, pytest, no network needed for the default run):
+
+| Command (repo root) | What it runs |
+| --- | --- |
+| `ingestion/.venv/bin/python -m pytest` | ~50 fast tests: the parser against the real raw EUR-Lex file (counts, structure, determinism, committed outputs not stale), the chunker (coverage, citations, splitting rules, cross-reference extraction), and retrieval logic with fakes (article/recital separation, glossary, reranking, evidence statuses, display band) |
+| `RUN_INTEGRATION=1 HF_HUB_OFFLINE=1 ingestion/.venv/bin/python -m pytest` | Adds end-to-end checks against the real database, models and reranker (corpus counts, golden questions, out-of-scope refusals). Needs `backend/.env` and the cached models. One known failure is tracked as a strict `xfail`: [docs/issues/0001](docs/issues/0001-article-6-1-missing-for-legal-bases-questions.md) |
+
+Install the test dependency with `ingestion/.venv/bin/pip install -r ingestion/requirements-dev.txt`. Retrieval *quality* is measured separately by the evaluation sets (see [ADR 0002](docs/adr/0002-retrieval-pipeline-and-abstention.md)).
+
+**Backend and frontend:** there is no automated test suite yet (no backend or frontend tests, and no linter configuration). `npm run lint` is defined in `package.json` but ESLint is not installed or configured, so it isn't usable as-is. For now, the end-to-end check is the diagnostic described in step 4 above. For a quick type check of the frontend, run `npx tsc --noEmit` from `frontend/`.
 
 ## Build and Deployment
 

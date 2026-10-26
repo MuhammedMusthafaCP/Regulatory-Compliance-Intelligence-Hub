@@ -52,6 +52,14 @@ No non-answerable held-out question reached `supported`; on dev, 1 of 19 did (co
 
 **Why the reranker score and not vector similarity.** Ranking quality alone does not separate them (AUROC is 0.93-0.99 for the reranker score, the best candidate's dense similarity and its pool maximum alike). The difference is at the low end. With bands calibrated by the same recipe on dev (LOW = lowest dev answerable score, HIGH = its 8th percentile), the reranker puts 90% of held-out out-of-scope questions in `no_basis`; dense similarity puts only about 40% there and leaves the rest in `weak_evidence`, where provisions would still be shown. The price is that fewer legitimate held-out questions reach `supported` with the reranker (75-80%) than with dense similarity (88-90%). We accept that trade because showing GDPR provisions for an unrelated question is the worse failure for a compliance tool; revisit it if too many valid questions come back as weak.
 
+### Display rules (measured 2026-10-26)
+
+Rule fixed before looking at results: adopt only if, on both sets, it shows at least 25% fewer items, loses at most one question of coverage per set, and does not lower precision (`ingestion/display_experiments.py`, `evaluation/results/display_tweaks.json`).
+
+- **Provisions: adopted.** Show only provisions whose reranker score is within 0.2 of the best (max 5, min 1). Items shown fall from 5.0 to 3.5 (dev) and 3.05 (held-out); precision rises from 0.52 to 0.69 and from 0.54 to 0.79; coverage is unchanged on dev and one question lower on held-out (0.975 -> 0.950). Tighter bands (0.1, 0.05, 0.02) lost two or more held-out questions.
+- **Recitals: unchanged (top 3).** Showing 2 lost coverage on both sets (any-gold 0.78 -> 0.74 dev, 0.85 -> 0.79 held-out); relevance cut-offs either removed nothing (0.7) or lost coverage (0.75 and above). Recital context stays valuable but imprecise (about 0.3); showing fewer is a product decision, not something the numbers support.
+- **The band does not fix score saturation.** Reranker scores for topically close clauses bunch near 1.0, so for "what rights does a data subject have to access their data" Articles 16 and 13(2) (0.97) still appear next to Article 15 (0.99).
+
 ### Rejected (each measured)
 
 | Option | Result |
@@ -67,11 +75,15 @@ No non-answerable held-out question reached `supported`; on dev, 1 of 19 did (co
 ## Limits and risks
 
 - **The question sets are AI-drafted, small and share an author with the glossary.** One question is about 2 points. Differences under about 0.04 are noise. The held-out set limits overfitting but is not independent evidence of real-user performance.
-- **Known failure: "legal bases / legal grounds for processing".** Article 6(1) (a long list chunk) is missing from the candidates for two of three phrasings; the answers come back as weak evidence rather than confidently wrong.
+- **Known failure: "legal bases / legal grounds for processing".** Article 6(1) (a long list chunk) is missing from the candidates for two of three phrasings; the answers come back as weak evidence rather than confidently wrong. Tracked in [docs/issues/0001](../issues/0001-article-6-1-missing-for-legal-bases-questions.md).
 - When asked "when can I process data without consent", Article 9(2) points can outrank Article 6(1).
 - **"GDPR-related but needs interpretation"** cannot be decided by retrieval; it belongs to the later answer-generation step, which must stay grounded in the returned provisions.
 - Thresholds are specific to this reranker revision (pinned) and need recalibration if it changes. Reranker scores on the GPU differ from CPU by about 5e-4.
 - Strict gold counts a sibling paragraph as a miss (for example 6(3) instead of 6(1)); article-level numbers are the fairer view for citing an article.
+
+## Change log
+
+- 2026-10-26: glossary bug fixed (the "inform..." rule matched "information"); no question outcome changed on dev or held-out. Provision display band added (see above).
 
 ## Reproduce
 
