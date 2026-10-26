@@ -1,0 +1,3 @@
+# Test/dev dependencies for the ingestion scripts
+-r requirements.txt
+pytest==9.1.1
