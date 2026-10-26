@@ -1,0 +1,244 @@
+{
+ "provisions": {
+  "top5 (current)": {
+   "dev": {
+    "any_hit": 0.9423076923076923,
+    "gold_recall": 0.9326923076923077,
+    "article_precision_lb": 0.5192307692307693,
+    "avg_shown": 5,
+    "n_any_hit": 49,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.975,
+    "gold_recall": 0.95,
+    "article_precision_lb": 0.54,
+    "avg_shown": 5,
+    "n_any_hit": 39,
+    "n": 40
+   }
+  },
+  "top3": {
+   "dev": {
+    "any_hit": 0.9230769230769231,
+    "gold_recall": 0.9230769230769231,
+    "article_precision_lb": 0.6474358974358975,
+    "avg_shown": 3,
+    "n_any_hit": 48,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.9,
+    "gold_recall": 0.875,
+    "article_precision_lb": 0.6333333333333333,
+    "avg_shown": 3,
+    "n_any_hit": 36,
+    "n": 40
+   }
+  },
+  "within 0.02 of top1 (max5)": {
+   "dev": {
+    "any_hit": 0.8461538461538461,
+    "gold_recall": 0.8461538461538461,
+    "article_precision_lb": 0.8378205128205128,
+    "avg_shown": 1.6923076923076923,
+    "n_any_hit": 44,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.85,
+    "gold_recall": 0.8375,
+    "article_precision_lb": 0.8575,
+    "avg_shown": 1.475,
+    "n_any_hit": 34,
+    "n": 40
+   }
+  },
+  "within 0.05 of top1 (max5)": {
+   "dev": {
+    "any_hit": 0.9230769230769231,
+    "gold_recall": 0.9134615384615384,
+    "article_precision_lb": 0.8105769230769231,
+    "avg_shown": 2.326923076923077,
+    "n_any_hit": 48,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.875,
+    "gold_recall": 0.8625,
+    "article_precision_lb": 0.8425,
+    "avg_shown": 1.875,
+    "n_any_hit": 35,
+    "n": 40
+   }
+  },
+  "within 0.1 of top1 (max5)": {
+   "dev": {
+    "any_hit": 0.9423076923076923,
+    "gold_recall": 0.9326923076923077,
+    "article_precision_lb": 0.7592948717948718,
+    "avg_shown": 3,
+    "n_any_hit": 49,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.925,
+    "gold_recall": 0.9,
+    "article_precision_lb": 0.8191666666666667,
+    "avg_shown": 2.425,
+    "n_any_hit": 37,
+    "n": 40
+   }
+  },
+  "within 0.2 of top1 (max5)": {
+   "dev": {
+    "any_hit": 0.9423076923076923,
+    "gold_recall": 0.9326923076923077,
+    "article_precision_lb": 0.6900641025641026,
+    "avg_shown": 3.5,
+    "n_any_hit": 49,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.95,
+    "gold_recall": 0.925,
+    "article_precision_lb": 0.7916666666666666,
+    "avg_shown": 3.05,
+    "n_any_hit": 38,
+    "n": 40
+   }
+  },
+  "score>=0.9 (max5)": {
+   "dev": {
+    "any_hit": 0.9038461538461539,
+    "gold_recall": 0.8942307692307693,
+    "article_precision_lb": 0.7939102564102564,
+    "avg_shown": 2.1923076923076925,
+    "n_any_hit": 47,
+    "n": 52
+   },
+   "held": {
+    "any_hit": 0.875,
+    "gold_recall": 0.85,
+    "article_precision_lb": 0.8895833333333333,
+    "avg_shown": 1.45,
+    "n_any_hit": 35,
+    "n": 40
+   }
+  }
+ },
+ "recitals": {
+  "top3 (current)": {
+   "dev": {
+    "any_gold": 0.782608695652174,
+    "precision_lb": 0.2971014492753623,
+    "avg_shown": 3,
+    "none_shown": 0.0,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.8529411764705882,
+    "precision_lb": 0.3137254901960784,
+    "avg_shown": 3,
+    "none_shown": 0.0,
+    "n": 34
+   }
+  },
+  "top2": {
+   "dev": {
+    "any_gold": 0.7391304347826086,
+    "precision_lb": 0.41304347826086957,
+    "avg_shown": 2,
+    "none_shown": 0.0,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.7941176470588235,
+    "precision_lb": 0.4264705882352941,
+    "avg_shown": 2,
+    "none_shown": 0.0,
+    "n": 34
+   }
+  },
+  "top1": {
+   "dev": {
+    "any_gold": 0.5652173913043478,
+    "precision_lb": 0.5652173913043478,
+    "avg_shown": 1,
+    "none_shown": 0.0,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.5882352941176471,
+    "precision_lb": 0.5882352941176471,
+    "avg_shown": 1,
+    "none_shown": 0.0,
+    "n": 34
+   }
+  },
+  "rel>=0.7 (max3)": {
+   "dev": {
+    "any_gold": 0.782608695652174,
+    "precision_lb": 0.3115942028985507,
+    "avg_shown": 2.9565217391304346,
+    "none_shown": 0.0,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.8529411764705882,
+    "precision_lb": 0.31862745098039214,
+    "avg_shown": 2.9705882352941178,
+    "none_shown": 0.0,
+    "n": 34
+   }
+  },
+  "rel>=0.75 (max3)": {
+   "dev": {
+    "any_gold": 0.7391304347826086,
+    "precision_lb": 0.3188405797101449,
+    "avg_shown": 2.6739130434782608,
+    "none_shown": 0.043478260869565216,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.7352941176470589,
+    "precision_lb": 0.37254901960784315,
+    "avg_shown": 2.323529411764706,
+    "none_shown": 0.08823529411764706,
+    "n": 34
+   }
+  },
+  "rel>=0.8 (max3)": {
+   "dev": {
+    "any_gold": 0.43478260869565216,
+    "precision_lb": 0.27898550724637683,
+    "avg_shown": 1.2826086956521738,
+    "none_shown": 0.3695652173913043,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.2647058823529412,
+    "precision_lb": 0.19607843137254902,
+    "avg_shown": 0.6470588235294118,
+    "none_shown": 0.6176470588235294,
+    "n": 34
+   }
+  },
+  "rel>=0.85 (max3)": {
+   "dev": {
+    "any_gold": 0.13043478260869565,
+    "precision_lb": 0.11956521739130435,
+    "avg_shown": 0.2391304347826087,
+    "none_shown": 0.8043478260869565,
+    "n": 46
+   },
+   "held": {
+    "any_gold": 0.058823529411764705,
+    "precision_lb": 0.058823529411764705,
+    "avg_shown": 0.08823529411764706,
+    "none_shown": 0.9117647058823529,
+    "n": 34
+   }
+  }
+ }
+}

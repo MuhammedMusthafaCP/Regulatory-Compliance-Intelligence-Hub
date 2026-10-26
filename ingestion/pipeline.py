@@ -15,8 +15,12 @@ from .retrieval import Config, Retriever
 CONFIG = Config("final", variant="A", rerank="mxbai-base", rerank_top=30, sources="db", source_k=15)
 NO_BASIS_BELOW = 0.2     # reranker top-1 score; below this the sources do not support an answer
 SUPPORTED_FROM = 0.5     # at or above this the top provision is treated as directly supporting
-TOP_PROVISIONS = 5
+TOP_PROVISIONS = 5       # never show more than this many operative chunks
+SCORE_BAND = 0.2         # ...and only those within this reranker-score distance of the best one
 CONTEXT_RECITALS = 3
+# Display rules were measured on dev and held-out (evaluation/results/display_tweaks.json): the band shows
+# ~35% fewer provisions at ~+0.15-0.25 precision for at most one lost question per set. Showing fewer
+# recitals lost coverage on both sets, so all 3 are kept.
 
 
 def status_for(score):
@@ -25,7 +29,8 @@ def status_for(score):
     return "weak_evidence" if score < SUPPORTED_FROM else "supported"
 
 
-def retrieve_evidence(retriever, question, top_k=TOP_PROVISIONS, context_k=CONTEXT_RECITALS, debug=False):
+def retrieve_evidence(retriever, question, top_k=TOP_PROVISIONS, context_k=CONTEXT_RECITALS, band=SCORE_BAND,
+                      debug=False):
     res = retriever.search(question, CONFIG)
     meta = retriever.c.meta
     confidence = max(res.rerank.values()) if res.rerank else 0.0
@@ -39,7 +44,9 @@ def retrieve_evidence(retriever, question, top_k=TOP_PROVISIONS, context_k=CONTE
         return out
     if status == "weak_evidence":
         out["note"] = "The closest provisions only weakly match; they may not answer the question directly."
-    out["provisions"] = [_item(meta[i], res.rerank[i], "operative") for i in res.order[:top_k]]
+    best = res.rerank[res.order[0]]
+    shown = [i for i in res.order[:top_k] if res.rerank[i] >= best - band]
+    out["provisions"] = [_item(meta[i], res.rerank[i], "operative") for i in shown]
     out["context"] = [dict(_item(meta[i], s, "interpretive_context"), relevance=round(s, 3))
                       for i, s in retriever.context_recitals(res, k=context_k)]
     return out
