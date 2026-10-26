@@ -40,7 +40,7 @@ RULES = [
     (r"\b(port\w+|move (my|their|the) data|another (service|provider)|machine[- ]readable)\b", "right to data portability structured commonly used machine-readable format"),
     (r"\b(object\w*|stop (using|processing)|opt[- ]out)\b", "right to object"),
     (r"\b(restrict\w*|pause|freeze|suspend)\b", "restriction of processing"),
-    (r"\b(tell|inform\w*|notice|notif\w+|transparen\w+|privacy (policy|notice))\b", "information to be provided transparency"),
+    (r"\b(tell|informed|informing|notice|notif\w+|transparen\w+|privacy (policy|notice))\b", "information to be provided transparency"),
     # security / breach / assessments
     (r"\b(breach\w*|hack\w*|leak\w*|stolen|lost data|data loss|cyber ?attack|ransomware|security incident)\b", "personal data breach notification to the supervisory authority within 72 hours communication to the data subject"),
     (r"\b(security|secure|encrypt\w*|protect\w*|safeguard\w*)\b", "security of processing appropriate technical and organisational measures"),
