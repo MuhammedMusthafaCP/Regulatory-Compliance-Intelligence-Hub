@@ -1,0 +1,9 @@
+# Optional: everything the GDPR search engine (ingestion/ pipeline) needs inside the API process.
+# Kept out of requirements.txt because torch is multi-GB; without these the API reports search as unavailable.
+# Install: pip install -r requirements-search.txt   (the models themselves come from `python -m ingestion.embed_chunks` and
+# the first `ingestion.search_chunks` run; the API runs offline against that cache.) Versions match ingestion/requirements.lock.txt.
+-r requirements.txt
+torch==2.14.1
+sentence-transformers==5.7.0
+transformers==5.18.0
+snowballstemmer==3.0.1

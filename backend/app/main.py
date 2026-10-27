@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -5,9 +7,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.search import router as search_router
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.system import HealthCheck
+from app.services.search import SearchService
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Start the search engine in the background so the API accepts requests while models load."""
+    if settings.SEARCH_ENABLED:
+        service = SearchService(max_queue=settings.SEARCH_MAX_QUEUE, timeout=settings.SEARCH_TIMEOUT_SECONDS)
+        loading = asyncio.create_task(service.start())
+    else:
+        service, loading = SearchService.disabled(), None
+    app.state.search = service
+    yield
+    if loading:
+        loading.cancel()
+    service.close()
+
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -17,6 +37,7 @@ app = FastAPI(
         "and Neon PostgreSQL (pgvector)."
     ),
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -26,6 +47,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(search_router)
 
 # Sample embedding used purely to prove pgvector read/write support.
 SAMPLE_TEST_VECTOR = [0.1, 0.2, 0.3]

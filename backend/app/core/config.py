@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 5
 
+    # GDPR search (see app/services/search.py). The engine needs the optional dependencies in
+    # requirements-search.txt; without them, or with SEARCH_ENABLED=false, the API reports it as unavailable.
+    SEARCH_ENABLED: bool = True
+    SEARCH_MAX_QUEUE: int = 8           # requests allowed to wait for the single inference worker
+    SEARCH_TIMEOUT_SECONDS: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:
