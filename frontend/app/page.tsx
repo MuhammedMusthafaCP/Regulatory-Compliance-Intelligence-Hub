@@ -1,16 +1,20 @@
 "use client";
 
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import EnginePanel, { type EngineView } from "./EnginePanel";
 import ResultView from "./ResultView";
 import SearchForm from "./SearchForm";
 import {
   getEngineState,
   MAX_QUESTION_LENGTH,
+  restartEngine,
   searchGdpr,
   SearchApiError,
-  type EngineState,
   type SearchResult,
 } from "./api";
+
+const POLL_INTERVAL_MS = 3000;
+const MAX_POLLS = 40; // about two minutes; after that the user decides whether to try again
 
 type View =
   | { phase: "idle" }
@@ -28,22 +32,26 @@ export default function SearchPage() {
   const [question, setQuestion] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
   const [view, setView] = useState<View>({ phase: "idle" });
-  const [engine, setEngine] = useState<EngineState | "unreachable">("loading");
+  const [engine, setEngine] = useState<EngineView>("loading");
+  const [retrying, setRetrying] = useState(false);
+  const [engineNote, setEngineNote] = useState<string | null>(null);
   const inflight = useRef<AbortController | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLHeadingElement>(null);
 
-  // The engine loads in the background after the API starts: while it is "loading" (on first visit, or after a
-  // search was told it is starting), poll until it is ready.
+  // The engine loads in the background after the API starts: while it is "loading", poll its status. Polling is
+  // bounded: after MAX_POLLS the page stops and lets the user decide, instead of asking forever.
   useEffect(() => {
     if (engine !== "loading") return;
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
+    let polls = 0;
     const check = async () => {
       try {
         const state = await getEngineState(controller.signal);
-        setEngine(state);
-        if (state === "loading") timer = setTimeout(check, 3000);
+        if (state !== "loading") return setEngine(state);
+        if (++polls >= MAX_POLLS) return setEngine("slow");
+        timer = setTimeout(check, POLL_INTERVAL_MS);
       } catch (err) {
         if (!(err instanceof DOMException)) setEngine("unreachable");
       }
@@ -53,6 +61,23 @@ export default function SearchPage() {
       controller.abort();
       clearTimeout(timer);
     };
+  }, [engine]);
+
+  /** One user-initiated attempt. A failed engine is asked to start again (the server rate-limits this); the
+   *  other states simply re-check. Nothing here repeats on its own. */
+  const retryEngine = useCallback(async () => {
+    setEngineNote(null);
+    if (engine !== "failed") return setEngine("loading");
+    setRetrying(true);
+    try {
+      const state = await restartEngine(new AbortController().signal);
+      setEngine(state);
+      if (state === "failed") setEngineNote("It was only just tried. Please wait about 30 seconds before trying again.");
+    } catch {
+      setEngine("unreachable");
+    } finally {
+      setRetrying(false);
+    }
   }, [engine]);
 
   useEffect(() => () => inflight.current?.abort(), []);
@@ -84,14 +109,20 @@ export default function SearchPage() {
       setView({ phase: "done", result });
     } catch (err) {
       if (err instanceof DOMException) return; // superseded by a newer search
-      const error = err instanceof SearchApiError ? err : new SearchApiError("server", "The search could not be completed. Please try again.");
-      if (error.kind === "starting") setEngine("loading");
+      const error = err instanceof SearchApiError ? err : new SearchApiError("server", "Something went wrong on our side. Please try again.");
+      // Engine problems are explained by the engine panel, not as a failed search.
+      const engineProblem = { starting: "loading", not_configured: "not_configured", unavailable: "failed" } as const;
+      if (error.kind in engineProblem) {
+        setEngine(engineProblem[error.kind as keyof typeof engineProblem]);
+        setView({ phase: "idle" });
+        return;
+      }
       setView({ phase: "error", question: text, error });
     }
   }, []);
 
   const searching = view.phase === "loading";
-  const engineBlocked = engine === "unavailable" || engine === "failed";
+  const engineBlocked = engine === "not_configured" || engine === "failed" || engine === "slow";
   const engineStarting = engine === "loading";
 
   return (
@@ -117,7 +148,7 @@ export default function SearchPage() {
           error={inputError}
         />
 
-        <EngineNotice engine={engine} />
+        <EnginePanel engine={engine} retrying={retrying} note={engineNote} onRetry={retryEngine} />
 
         <div className="mt-3 text-ui text-ink-muted">
           <p>Try</p>
@@ -152,25 +183,6 @@ export default function SearchPage() {
   );
 }
 
-function EngineNotice({ engine }: { engine: EngineState | "unreachable" }) {
-  const text =
-    engine === "loading"
-      ? "The search engine is starting up. This takes a few seconds, and the search button will enable itself when it is ready."
-      : engine === "unavailable"
-        ? "Search is not available on this server. It needs the optional search dependencies; see the README."
-        : engine === "failed"
-          ? "The search engine failed to start. Check the backend logs."
-          : engine === "unreachable"
-            ? "Can't reach the backend. Check that it is running; you can still try a search."
-            : null;
-  if (!text) return null;
-  return (
-    <p role="status" className="mt-1 border-l-4 border-signal-weak bg-signal-weakbg px-4 py-3 text-ui">
-      {text}
-    </p>
-  );
-}
-
 function Progress() {
   return (
     <div role="status" className="mt-10 max-w-3xl border-t border-rule pt-6">
@@ -185,11 +197,11 @@ function Progress() {
 
 const ErrorPanel = forwardRef<HTMLHeadingElement, { error: SearchApiError; onRetry: () => void; busy: boolean }>(
   function ErrorPanel({ error, onRetry, busy }, ref) {
-    const canRetry = error.kind !== "unavailable" && error.kind !== "invalid";
+    const canRetry = error.kind !== "invalid";
     return (
       <section aria-labelledby="error-heading" className="mt-10 max-w-3xl border-l-4 border-signal-error bg-signal-errorbg px-5 py-4">
         <h2 id="error-heading" ref={ref} tabIndex={-1} className="font-semibold focus:outline-none">
-          {error.kind === "starting" ? "The search engine is still starting" : "The search didn’t complete"}
+          The search didn’t complete
         </h2>
         <p className="mt-1 text-ink-soft">{error.message}</p>
         {canRetry && (

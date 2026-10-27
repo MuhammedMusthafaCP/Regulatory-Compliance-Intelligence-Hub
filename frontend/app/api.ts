@@ -37,7 +37,7 @@ const SearchResultSchema = z.object({
   took_ms: z.number(),
 });
 
-const EngineStatusSchema = z.object({ state: z.enum(["loading", "ready", "unavailable", "failed"]) });
+const EngineStatusSchema = z.object({ state: z.enum(["loading", "ready", "not_configured", "failed"]) });
 
 export type Provision = z.infer<typeof ProvisionSchema>;
 export type ContextRecital = z.infer<typeof ContextRecitalSchema>;
@@ -56,7 +56,16 @@ export function eurLexUrl(raw: string | null): string | null {
   }
 }
 
-export type SearchErrorKind = "invalid" | "starting" | "unavailable" | "busy" | "timeout" | "server" | "network";
+/** not_configured: nobody has set the engine up (an administrator must act). unavailable: it is set up but failed to start (usually temporary). */
+export type SearchErrorKind =
+  | "invalid"
+  | "starting"
+  | "not_configured"
+  | "unavailable"
+  | "busy"
+  | "timeout"
+  | "server"
+  | "network";
 
 export class SearchApiError extends Error {
   constructor(readonly kind: SearchErrorKind, message: string) {
@@ -65,18 +74,22 @@ export class SearchApiError extends Error {
   }
 }
 
+// What users read. Deliberately independent of the API's own messages: those are for API clients, these are for people.
 const DEFAULT_MESSAGES: Record<SearchErrorKind, string> = {
   invalid: `Enter a question of 1 to ${MAX_QUESTION_LENGTH} characters.`,
-  starting: "The search engine is starting up. Please try again in a few seconds.",
-  unavailable: "Search is not available on this server.",
-  busy: "The search engine is busy. Please try again shortly.",
+  starting: "Search is starting up. Please try again in a few seconds.",
+  not_configured:
+    "The search service has not been configured yet. Please try again later or contact the application administrator if you need assistance.",
+  unavailable: "We couldn’t start the search service. This is usually temporary. Please try again in a few minutes.",
+  busy: "Search is busy right now. Please try again in a few seconds.",
   timeout: "The search took too long. Please try again.",
-  server: "The search could not be completed. Please try again.",
-  network: "Can't reach the search service. Check that the backend is running, then try again.",
+  server: "Something went wrong on our side. Please try again.",
+  network: "We can’t reach the search service. Check your connection and try again.",
 };
 
 const KIND_BY_CODE: Record<string, SearchErrorKind> = {
   search_loading: "starting",
+  search_not_configured: "not_configured",
   search_unavailable: "unavailable",
   search_busy: "busy",
   search_timeout: "timeout",
@@ -103,8 +116,7 @@ async function request<T>(path: string, schema: z.ZodType<T>, init: RequestInit 
   const detail = body?.detail;
   const code: string | undefined = typeof detail === "object" && !Array.isArray(detail) ? detail?.code : undefined;
   const kind: SearchErrorKind = res.status === 422 ? "invalid" : (code && KIND_BY_CODE[code]) || "server";
-  const message = kind !== "invalid" && typeof detail?.message === "string" ? detail.message : DEFAULT_MESSAGES[kind];
-  throw new SearchApiError(kind, message);
+  throw new SearchApiError(kind, DEFAULT_MESSAGES[kind]);
 }
 
 export function searchGdpr(question: string, signal: AbortSignal): Promise<SearchResult> {
@@ -118,4 +130,9 @@ export function searchGdpr(question: string, signal: AbortSignal): Promise<Searc
 
 export async function getEngineState(signal: AbortSignal): Promise<EngineState> {
   return (await request("/api/search/status", EngineStatusSchema, { signal })).state;
+}
+
+/** Ask a failed engine to start again. The server rate-limits this, so it is safe to call from a button. */
+export async function restartEngine(signal: AbortSignal): Promise<EngineState> {
+  return (await request("/api/search/restart", EngineStatusSchema, { method: "POST", signal })).state;
 }
