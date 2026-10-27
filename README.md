@@ -45,7 +45,7 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 │   │   └── versions/             # Migrations: health_checks + pgvector; documents/chunks; chunk_embeddings
 │   └── app/
 │       ├── main.py               # FastAPI app, CORS, lifespan (starts the search engine), `/` and `/api/health`
-│       ├── api/search.py         # `POST /api/search`, `GET /api/search/status` (thin: validation, error mapping)
+│       ├── api/search.py         # `POST /api/search`, `GET /api/search/status`, `POST /api/search/restart` (thin: validation, error mapping)
 │       ├── schemas/search.py     # Pydantic request/response models
 │       ├── services/search.py    # Runs the ingestion pipeline: background load, one worker thread, queue limit, timeout
 │       ├── core/config.py        # Settings (pydantic-settings, loads backend/.env)
@@ -63,22 +63,29 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 ├── docs/adr/                     # Architecture decision records (0001 roadmap, 0002 retrieval pipeline, 0003 serving it)
 ├── docs/issues/                  # Tracked known issues
 └── frontend/
-    ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed)
+    ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed) and optional contact/operator settings
+    ├── scripts/routes.test.mjs   # Route smoke tests (`npm run test:routes`)
     ├── package.json
     ├── next.config.mjs
     ├── tailwind.config.ts / postcss.config.mjs / tsconfig.json
     └── app/
-        ├── layout.tsx            # Root layout: fonts, warm "paper" theme, header and footer
+        ├── layout.tsx            # Root layout: fonts, warm "paper" theme, header, SiteFooter
         ├── page.tsx              # The landing page: the GDPR search (state handling, engine-status polling)
         ├── SearchForm.tsx        # Question input
-        ├── ResultView.tsx        # Verdict, provisions (operative text) and recitals (interpretive context)
-        ├── api.ts                # Typed API client; Zod-validates every response; EUR-Lex link check
+        ├── ResultView.tsx        # Verdict, provisions (operative text), recitals (interpretive context), source note
+        ├── EnginePanel.tsx       # User-facing explanation of each engine state (starting, not configured, failed, ...)
+        ├── api.ts                # Typed API client; Zod-validates every response; user-facing error copy; EUR-Lex link check
+        ├── _content/site.ts      # Product facts, footer navigation, optional per-deployment settings
+        ├── _components/          # ContentPage (shared layout for information pages), Faq accordion, SiteFooter
+        ├── about/ faq/ help/ contact/ terms/ privacy/ cookies/ disclaimer/   # Information and legal pages
         └── globals.css
 ```
 
 ## Frontend
 
 - **Architecture:** a single Next.js App Router page, the landing page ([frontend/app/page.tsx](frontend/app/page.tsx)), a client component. It calls `POST ${NEXT_PUBLIC_API_URL}/api/search`, shows idle / searching / result / out-of-scope / error / engine-starting states, moves focus to the results for keyboard and screen-reader users, and validates every API response with Zod before rendering. Provisions (the operative text) and recitals (interpretive context) are shown separately. There is no separate search route and no health-check UI.
+- **Information and legal pages:** About (with "How it works"), FAQ, Help, Contact, Terms and Conditions, Privacy Policy, Cookie Policy and Disclaimer, all reachable from the footer and all built on one shared layout ([frontend/app/_components/ContentPage.tsx](frontend/app/_components/ContentPage.tsx)). Their content describes the behaviour of this software as implemented (no cookies or browser storage, questions neither stored nor logged by the application, no third-party AI or analytics) and was checked against the code and the running app. **The legal pages have not been reviewed by a lawyer**; each says so, and the operator must review them for their jurisdiction before relying on them. Governing law, retention periods and the operator's identity are deliberately not invented: the operator's name and a support email are optional deployment settings (see Environment Configuration), and the "Last updated" date is `documentsUpdated` in [frontend/app/_content/site.ts](frontend/app/_content/site.ts), which must be changed whenever those pages change.
+- **Engine unavailable:** the page explains each state in plain language, without developer instructions (see "Search engine states" below). Polling for startup is bounded (about two minutes), retries only happen when the user clicks, and the server rate-limits restarts.
 - **Fonts:** Newsreader (headings) and Public Sans (UI), self-hosted through npm packages, so the page makes no third-party requests.
 - **Styling:** Tailwind CSS with the blue-led palette defined as tokens in [frontend/tailwind.config.ts](frontend/tailwind.config.ts) (`brand` #3368A0, `lake` #66A3BF, `foam` #C8DFDB, `paper` #F2EFE7; `lake` is for rules and accents only, it is too light for text). Tailwind scans `app/**` and `components/**`.
 - **Dev server port:** `4001` (set in the `dev` script). The backend's default CORS origin matches this.
@@ -105,8 +112,9 @@ Commands (run from `frontend/`):
 | `GET` | `/` | Liveness: `{"service": ..., "status": "online"}` |
 | `GET` | `/api/health` | Writes a `health_checks` row (with a sample vector), reads the latest row back. Returns `200` with `api_status`, `database_status`, `write_verified`, `read_verified`, `vector_support_verified`, `latest_record`, `checked_at`; returns `503` with a `detail` message if the DB step fails. |
 
-| `GET` | `/api/search/status` | `{"state": "loading" \| "ready" \| "unavailable" \| "failed", "ready": bool}`. The engine loads in the background after startup (tens of seconds). |
-| `POST` | `/api/search` | Body `{"question": "..."}` (1 to 500 characters, trimmed). Returns `200` with `status` (`supported` / `weak_evidence` / `no_basis`), `confidence`, `note`, `provisions` (operative article chunks, each with `citation`, `article`, `article_title`, `text`, `chunk_id`, `source_url`), `context` (recitals, interpretive only) and `took_ms`. Out-of-scope questions return `200` with `no_basis` and empty lists. Errors use `{"detail": {"code", "message"}}`: `422` invalid input (FastAPI's standard validation body), `429 search_busy`, `503 search_loading` / `search_unavailable`, `504 search_timeout`, `500 search_failed` (generic message; details only in the server log). `Retry-After` is set on retryable `429`/`503`. |
+| `GET` | `/api/search/status` | `{"state": "loading" \| "ready" \| "not_configured" \| "failed", "ready": bool}` (see "Search engine states"). The engine loads in the background after startup (tens of seconds). |
+| `POST` | `/api/search/restart` | Asks a `failed` engine to start again and returns the new status. Rate-limited: it only acts when the state is `failed` and 30 s have passed since the last failure; otherwise it returns the current state unchanged. |
+| `POST` | `/api/search` | Body `{"question": "..."}` (1 to 500 characters, trimmed). Returns `200` with `status` (`supported` / `weak_evidence` / `no_basis`), `confidence`, `note`, `provisions` (operative article chunks, each with `citation`, `article`, `article_title`, `text`, `chunk_id`, `source_url`), `context` (recitals, interpretive only) and `took_ms`. Out-of-scope questions return `200` with `no_basis` and empty lists. Errors use `{"detail": {"code", "message"}}`: `422` invalid input (FastAPI's standard validation body), `429 search_busy`, `503` with `search_loading` (starting), `search_unavailable` (failed, temporary, with `Retry-After: 30`) or `search_not_configured` (an administrator must act, no `Retry-After`), `504 search_timeout`, `500 search_failed` (generic message; details only in the server log). `Retry-After` is set on the retryable `429`/`503` responses. |
 
 FastAPI's interactive docs are served at http://localhost:7001/docs.
 
@@ -122,6 +130,17 @@ make dev                                      # API on :7001; GET /api/search/st
 ```
 
 The two models (embedding model and reranker) are downloaded by the ingestion scripts (`ingestion/.venv/bin/python -m ingestion.search_chunks "test"` once); the API then runs offline (`HF_HUB_OFFLINE=1` is set by default) against that cache. On Apple Silicon the reranker uses the GPU (about 1.5 to 2 s per search); in Docker, which has no GPU, a search takes about 2.5 to 4.5 s on CPU (measured on a 12-core ARM host). The Docker image bundles everything (see "Run with Docker"), so `make up` serves search without any of the steps above.
+
+#### Search engine states
+
+| State | Meaning | Typical cause | API code on search | What the UI says | Fix |
+| --- | --- | --- | --- | --- | --- |
+| `loading` | Starting, or retrying after a failure | Normal for ~15 s after the API starts | `503 search_loading` (`Retry-After: 5`) | "Search is starting up", button enables itself | Wait. Polling stops after ~2 minutes |
+| `ready` | Serving | | | | |
+| `not_configured` | Cannot run until an administrator acts | `SEARCH_ENABLED=false`, or the `ingestion` package / `requirements-search.txt` is not installed | `503 search_not_configured` (no `Retry-After`) | "Search is currently unavailable. The search service has not been configured yet..." (no retry button) | Install `requirements-search.txt` and unset `SEARCH_ENABLED=false`, then restart the API |
+| `failed` | Configured, but crashed while starting | Database unreachable or `DATABASE_URL` wrong, models not in the Hugging Face cache (the API runs offline), out of memory | `503 search_unavailable` (`Retry-After: 30`) | "Search is temporarily unavailable... Try again" | Read the API log (`search engine failed to start` with the stack trace), fix the cause, then use the page's Try again or `POST /api/search/restart` |
+
+Common configuration errors: a missing or wrong `DATABASE_URL` (engine `failed`); models not downloaded yet (run `ingestion/.venv/bin/python -m ingestion.fetch_models`, engine `failed`); `requirements-search.txt` not installed (`not_configured`). Details are logged server-side only; none of them reach the browser.
 
 > Note: `/api/health` **writes a row on every call**, so the `health_checks` table grows with each diagnostic. The `/api` prefix comes from `API_V1_PREFIX`.
 
@@ -179,7 +198,7 @@ Never commit real credentials. `backend/.env` is git-ignored.
 | `API_V1_PREFIX` | No | `/api` | Prefix for API routes |
 | `DB_POOL_SIZE` | No | `5` | Base connection pool size |
 | `DB_MAX_OVERFLOW` | No | `5` | Extra connections beyond the pool |
-| `SEARCH_ENABLED` | No | `true` | Load the search engine at startup. With `false`, or without `requirements-search.txt`, search reports `unavailable` |
+| `SEARCH_ENABLED` | No | `true` | Load the search engine at startup. With `false`, or without `requirements-search.txt`, search reports `not_configured` |
 | `SEARCH_MAX_QUEUE` | No | `8` | Searches allowed to wait for the single inference worker; more get `429` |
 | `SEARCH_TIMEOUT_SECONDS` | No | `60` | Per-search limit before `504` |
 
@@ -190,6 +209,8 @@ The backend reads `.env` relative to the working directory, so run backend comma
 | Variable | Default | Description |
 | --- | --- | --- |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:7001` | Backend base URL (exposed to the browser) |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | unset | Optional. When set, the Contact page shows it as a mailto link; when unset, the page says no support email is published |
+| `NEXT_PUBLIC_OPERATOR_NAME` | unset | Optional. Name of whoever runs this deployment; the legal pages say "the operator of this service" when unset |
 
 ## Local Development Setup
 
@@ -246,9 +267,11 @@ Everything lives in the root [Makefile](Makefile) and [docker/](docker/) (compos
 
 Install the test dependency with `ingestion/.venv/bin/pip install -r ingestion/requirements-dev.txt`. Retrieval *quality* is measured separately by the evaluation sets (see [ADR 0002](docs/adr/0002-retrieval-pipeline-and-abstention.md)).
 
-**Backend** (`backend/tests/`, 31 tests, no database or models needed): `cd backend && pip install -r requirements-dev.txt && python -m pytest`. Covers the search API contract (shape, validation, status codes, no leaked internals, unchanged existing routes) and the search service (loading states, one-at-a-time execution, queue limit, timeout, degrading to `unavailable` when the pipeline is not installed).
+**Backend** (`backend/tests/`, 38 tests, no database or models needed): `cd backend && pip install -r requirements-dev.txt && python -m pytest`. Covers the search API contract (shape, validation, status codes, no leaked internals, unchanged existing routes) and the search service (loading states, `not_configured` versus `failed`, restart with its cooldown, one-at-a-time execution, queue limit, timeout).
 
-**Frontend:** no automated tests and no linter (`npm run lint` is defined but ESLint is not installed or configured, so it isn't usable as-is). Checks that work: `npx tsc --noEmit` and `npm run build` from `frontend/`.
+**Frontend routes:** `cd frontend && npm run test:routes` (Node's built-in runner, no extra dependencies; needs the frontend running, default `BASE_URL=http://localhost:4001`). It checks that every page responds with one `h1` and a proper title, that every footer link opens a real page and the section anchors exist, the copyright line, that no page mentions the README, that the FAQ covers the key questions, and that removed routes return 404.
+
+**Frontend (other):** no component tests and no linter (`npm run lint` is defined but ESLint is not installed or configured, so it isn't usable as-is). Checks that work: `npx tsc --noEmit` and `npm run build` from `frontend/`.
 
 ## Build and Deployment
 
@@ -264,7 +287,9 @@ Install the test dependency with `ingestion/.venv/bin/pip install -r ingestion/r
 | Backend fails at startup with a validation error for `DATABASE_URL` | `backend/.env` is missing or you're not running from `backend/`. |
 | `make dev` → `.venv/bin/uvicorn: No such file or directory` | Create the virtualenv at `backend/.venv` and install requirements (see setup step 2). |
 | The page says it can't reach the backend or the search didn't complete | Backend isn't running, `NEXT_PUBLIC_API_URL` is wrong, or the database is waking up from idle (Neon free tier scales to zero when idle). Retry after a few seconds. |
-| The page says the search engine is starting | Normal for the first ~15 seconds after the backend starts; the send button enables itself. If it stays that way, check the backend logs. |
+| The page says search is "currently unavailable" (not configured) | `SEARCH_ENABLED=false`, or the search dependencies are not installed on the server. See "Search engine states". |
+| The page says search is "temporarily unavailable" | The engine failed while starting (often an unreachable database or missing model cache). Read the API log, fix the cause, then use Try again. See "Search engine states". |
+| The page says search is starting Normal for the first ~15 seconds after the backend starts; the send button enables itself. If it stays that way, check the backend logs. |
 | Browser console shows a CORS error | The frontend isn't served from `FRONTEND_ORIGIN`. Use port 4001 or update `FRONTEND_ORIGIN`. Restart the backend after changing `.env`. |
 | `/api/health` returns `503` | Read the `detail` field. Common causes: migrations not applied (`alembic upgrade head`), wrong credentials, or the `vector` extension is missing. |
 | `alembic upgrade head` fails on `CREATE EXTENSION vector` | The DB user lacks permission, or pgvector isn't available on the server. |
