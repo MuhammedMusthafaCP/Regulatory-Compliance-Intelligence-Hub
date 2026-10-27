@@ -120,7 +120,7 @@ pip install -r requirements-search.txt        # torch, sentence-transformers, ..
 make dev                                      # API on :7001; GET /api/search/status turns "ready" after the models load
 ```
 
-The two models (embedding model and reranker) are downloaded by the ingestion scripts (`ingestion/.venv/bin/python -m ingestion.search_chunks "test"` once); the API then runs offline (`HF_HUB_OFFLINE=1` is set by default) against that cache. On Apple Silicon the reranker uses the GPU (about 2 s per search); on CPU expect roughly 20 s (an estimate extrapolated from the CPU reranking speed measured earlier, not a benchmark of this API). **The Docker image does not include these dependencies**, so there the endpoint reports `search_unavailable` and the page says so; run the backend natively for search until a dedicated retrieval service is added.
+The two models (embedding model and reranker) are downloaded by the ingestion scripts (`ingestion/.venv/bin/python -m ingestion.search_chunks "test"` once); the API then runs offline (`HF_HUB_OFFLINE=1` is set by default) against that cache. On Apple Silicon the reranker uses the GPU (about 1.5 to 2 s per search); in Docker, which has no GPU, a search takes about 2.5 to 4.5 s on CPU (measured on a 12-core ARM host). The Docker image bundles everything (see "Run with Docker"), so `make up` serves search without any of the steps above.
 
 > Note: `/api/health` **writes a row on every call**, so the `health_checks` table grows with each diagnostic. The `/api` prefix comes from `API_V1_PREFIX`.
 
@@ -227,6 +227,12 @@ make logs | ps | down | rebuild
 ```
 
 Everything lives in the root [Makefile](Makefile) and [docker/](docker/) (compose file plus one Dockerfile per service). `develop.watch` in [docker/docker-compose.yml](docker/docker-compose.yml): source edits are synced and hot-reloaded (uvicorn `--reload`, `next dev`); config files restart the process; changes to `requirements.txt`, `package*.json`, a Dockerfile or `backend/.env` rebuild the image and recreate the container. Dependency layers are cached. The database is external (Neon), so there is no DB container. Host ports 7001/4001 must be free.
+
+**Search in Docker.** The backend image includes the GDPR search engine: CPU-only torch, the pipeline from `ingestion/` and the two pinned models, baked in so the container runs offline (about 1.9 GB; the first build takes several minutes, later ones are cached). The build context is the repository root, restricted by [docker/backend.Dockerfile.dockerignore](docker/backend.Dockerfile.dockerignore). After `make up` the API answers immediately and `GET /api/search/status` turns `ready` about 15 seconds later. `develop.watch` also syncs `ingestion/` into the container, so pipeline edits reload the engine.
+
+**If the build fails with `self-signed certificate in certificate chain`:** your network inspects HTTPS (for example Cloudflare WARP / Zero Trust) and the build steps that download torch and the models don't trust its root CA, although running containers do. On macOS run `make ca` once (it exports the CA named by `CA_NAME`, default `Gateway CA - Cloudflare Managed`, from your keychain to `docker/extra-ca.pem`, which is git-ignored), then `make up`. The CA is passed to those steps as a BuildKit secret, so it is never stored in an image layer and certificate verification stays on. Use `CA_NAME=... make ca` for a different proxy CA, or `EXTRA_CA_FILE=/path/to/ca.pem make up`. Never disable verification.
+
+**Docker disk space.** The image needs roughly 2 GB; if a build stops with `No space left on device`, free space in Docker (`docker system df` shows what is reclaimable).
 
 ## Testing
 
