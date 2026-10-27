@@ -1,20 +1,37 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import "@fontsource-variable/newsreader";
+import "@fontsource-variable/public-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Regulatory & Compliance Intelligence Hub",
   description:
-    "Enterprise AI platform for grounded, auditable regulatory compliance verification.",
+    "Ask a plain-language question and get the GDPR provisions that answer it, each cited to its article, with an honest signal when the Regulation doesn't support an answer.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased text-slate-100">{children}</body>
+      <body className="flex min-h-screen flex-col bg-paper font-ui text-ink antialiased selection:bg-foam">
+        <header className="border-b border-rule">
+          <div className="mx-auto flex w-full max-w-6xl items-center px-4 py-4 sm:px-6 lg:px-8">
+            <Link href="/" className="font-display text-heading font-semibold tracking-tight">
+              <span aria-hidden className="mr-2 text-brand">§</span>
+              Regulatory &amp; Compliance Intelligence Hub
+            </Link>
+          </div>
+        </header>
+
+        <div className="flex-1">{children}</div>
+
+        <footer className="border-t border-rule">
+          <p className="mx-auto w-full max-w-6xl px-4 py-6 text-ui text-ink-muted sm:px-6 lg:px-8">
+            Source: Regulation (EU) 2016/679 as published in the Official Journal on 4 May 2016 (EUR-Lex). Search results
+            point to the text; they are not legal advice.
+          </p>
+        </footer>
+      </body>
     </html>
   );
 }
