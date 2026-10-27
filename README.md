@@ -2,8 +2,7 @@
 
 An enterprise AI platform for grounded, auditable regulatory compliance verification (e.g. GDPR, EU AI Act). The goal is to give compliance teams answers tied to official regulatory text, with traceable citations rather than unsupported claims.
 
-> **Current status: Phase 1 – Core Infrastructure & System Connectivity.**
-> Only the foundation exists today: a dashboard, an API, and a PostgreSQL/pgvector database, with a single diagnostic that proves all three are wired together. Document upload, clause parsing, Q&A and report export are *out of scope* for Phase 1 (see [requirement-docs/brd-1.md](requirement-docs/brd-1.md)).
+> **Current status:** the Phase 1 foundation (frontend, API, PostgreSQL/pgvector) plus a GDPR search: the landing page takes a plain-language question and returns the provisions of Regulation (EU) 2016/679 that answer it, each cited to its article, with recitals as separate interpretive context and an honest "no basis" when the Regulation doesn't support an answer. It retrieves and cites the official text; it does not generate prose answers. Document upload, other regulations and report export are not built yet (see [requirement-docs/brd-1.md](requirement-docs/brd-1.md) and [docs/adr/0001-retrieval-and-fine-tuning-roadmap.md](docs/adr/0001-retrieval-and-fine-tuning-roadmap.md)).
 
 ## Architecture
 
@@ -14,7 +13,7 @@ An enterprise AI platform for grounded, auditable regulatory compliance verifica
 └──────────────────┘               └──────────────────┘             └──────────────────────┘
 ```
 
-The dashboard's **Test Full Stack Connection** button calls `GET /api/health`. The backend inserts a `health_checks` row containing a sample 3‑dimension vector, reads the latest row back, and returns the result. A successful response confirms DB read/write and pgvector support.
+The landing page sends the question to `POST /api/search`; the backend runs the retrieval pipeline from `ingestion/` (see "GDPR search" below) over the chunks and vectors stored in PostgreSQL. `GET /api/health` is a backend-only diagnostic (no UI): it inserts a `health_checks` row containing a sample 3-dimension vector, reads the latest row back, and returns the result, confirming DB read/write and pgvector support.
 
 ## Tech Stack
 
@@ -69,17 +68,19 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
     ├── next.config.mjs
     ├── tailwind.config.ts / postcss.config.mjs / tsconfig.json
     └── app/
-        ├── layout.tsx            # Root layout and metadata
-        ├── page.tsx              # Dashboard with the diagnostic button and status badge
-        ├── search/               # GDPR search page (own layout/theme): page, SearchForm, ResultView, api.ts
+        ├── layout.tsx            # Root layout: fonts, warm "paper" theme, header and footer
+        ├── page.tsx              # The landing page: the GDPR search (state handling, engine-status polling)
+        ├── SearchForm.tsx        # Question input
+        ├── ResultView.tsx        # Verdict, provisions (operative text) and recitals (interpretive context)
+        ├── api.ts                # Typed API client; Zod-validates every response; EUR-Lex link check
         └── globals.css
 ```
 
 ## Frontend
 
-- **Architecture:** Single Next.js App Router page ([frontend/app/page.tsx](frontend/app/page.tsx)), a client component. It holds the diagnostic state (`idle` / `loading` / `success` / `error`), calls `${NEXT_PUBLIC_API_URL}/api/health` with `fetch`, and renders the JSON result. While loading, it shows a "database may be waking up" message and disables the button to prevent duplicate submissions.
-- **Search page:** [frontend/app/search/](frontend/app/search/) at `/search`, a client page with its own layout and theme. It calls the search API, shows idle / searching / result / out-of-scope / error / engine-starting states, moves focus to the results for keyboard and screen-reader users, and validates every API response with Zod before rendering. Provisions (the operative text) and recitals (interpretive context) are shown separately. Fonts (Newsreader for headings, Public Sans for UI) are self-hosted through npm packages, so the page makes no third-party requests.
-- **Styling:** Tailwind CSS. The dashboard keeps its dark slate theme; the search page uses the blue-led palette defined as tokens in [frontend/tailwind.config.ts](frontend/tailwind.config.ts) (`brand` #3368A0, `lake` #66A3BF, `foam` #C8DFDB, `paper` #F2EFE7; `lake` is for rules and accents only, it is too light for text). Tailwind scans `app/**` and `components/**`.
+- **Architecture:** a single Next.js App Router page, the landing page ([frontend/app/page.tsx](frontend/app/page.tsx)), a client component. It calls `POST ${NEXT_PUBLIC_API_URL}/api/search`, shows idle / searching / result / out-of-scope / error / engine-starting states, moves focus to the results for keyboard and screen-reader users, and validates every API response with Zod before rendering. Provisions (the operative text) and recitals (interpretive context) are shown separately. There is no separate search route and no health-check UI.
+- **Fonts:** Newsreader (headings) and Public Sans (UI), self-hosted through npm packages, so the page makes no third-party requests.
+- **Styling:** Tailwind CSS with the blue-led palette defined as tokens in [frontend/tailwind.config.ts](frontend/tailwind.config.ts) (`brand` #3368A0, `lake` #66A3BF, `foam` #C8DFDB, `paper` #F2EFE7; `lake` is for rules and accents only, it is too light for text). Tailwind scans `app/**` and `components/**`.
 - **Dev server port:** `4001` (set in the `dev` script). The backend's default CORS origin matches this.
 
 Commands (run from `frontend/`):
@@ -214,7 +215,7 @@ The backend reads `.env` relative to the working directory, so run backend comma
    npm run dev                 # UI on http://localhost:4001
    ```
 
-4. **Verify:** open http://localhost:4001 and click **Test Full Stack Connection**. The badge should switch to *Operational* and show the JSON payload. You can also test the API directly: `curl http://localhost:7001/api/health`.
+4. **Verify:** open http://localhost:4001 and ask a question. Search needs the optional dependencies in [GDPR search](#gdpr-search); without them the page says search is unavailable. To check the API and database directly: `curl http://localhost:7001/api/health`.
 
 ## Run with Docker (auto-rebuild on change)
 
@@ -262,7 +263,8 @@ Install the test dependency with `ingestion/.venv/bin/pip install -r ingestion/r
 | --- | --- |
 | Backend fails at startup with a validation error for `DATABASE_URL` | `backend/.env` is missing or you're not running from `backend/`. |
 | `make dev` → `.venv/bin/uvicorn: No such file or directory` | Create the virtualenv at `backend/.venv` and install requirements (see setup step 2). |
-| Dashboard shows an error or "Unable to reach the processing engine" | Backend isn't running, `NEXT_PUBLIC_API_URL` is wrong, or the database is waking up from idle (Neon free tier scales to zero when idle). Retry after a few seconds. |
+| The page says it can't reach the backend or the search didn't complete | Backend isn't running, `NEXT_PUBLIC_API_URL` is wrong, or the database is waking up from idle (Neon free tier scales to zero when idle). Retry after a few seconds. |
+| The page says the search engine is starting | Normal for the first ~15 seconds after the backend starts; the send button enables itself. If it stays that way, check the backend logs. |
 | Browser console shows a CORS error | The frontend isn't served from `FRONTEND_ORIGIN`. Use port 4001 or update `FRONTEND_ORIGIN`. Restart the backend after changing `.env`. |
 | `/api/health` returns `503` | Read the `detail` field. Common causes: migrations not applied (`alembic upgrade head`), wrong credentials, or the `vector` extension is missing. |
 | `alembic upgrade head` fails on `CREATE EXTENSION vector` | The DB user lacks permission, or pgvector isn't available on the server. |
