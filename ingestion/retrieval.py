@@ -69,7 +69,7 @@ class Corpus:
                 async with eng.connect() as c:
                     meta = [dict(r) for r in (await c.execute(sql(
                         "SELECT ordinal, chunk_id, type, article_number, paragraph, point, citation, article_title, "
-                        "chapter_title, recital_number, text FROM chunks ORDER BY ordinal"))).mappings()]
+                        "chapter_title, recital_number, source_url, text FROM chunks ORDER BY ordinal"))).mappings()]
                     vecs = {}
                     for v in variants:
                         rows = (await c.execute(sql(
@@ -96,20 +96,28 @@ class Result:
 
 
 class Retriever:
-    def __init__(self, corpus, model):
-        self.c, self.model = corpus, model
+    def __init__(self, corpus, model, cache=True):
+        """cache=True (experiments): remember query vectors and reranker scores, persisted to disk.
+        cache=False (serving): nothing is remembered, so a long-running process cannot grow without bound."""
+        self.c, self.model, self.cache = corpus, model, cache
         self._qcache, self._ce = {}, {}
-        try:
-            self._ce_scores = json.loads(CE_CACHE.read_text())
-        except Exception:
-            self._ce_scores = {}   # "reranker|query|passage sha256" -> score
+        self._ce_scores = {}   # "reranker|query|passage sha256" -> score
+        if cache:
+            try:
+                self._ce_scores = json.loads(CE_CACHE.read_text())
+            except Exception:
+                pass
 
     def save_cache(self):
+        if not self.cache:
+            return
         CE_CACHE.parent.mkdir(parents=True, exist_ok=True)
         CE_CACHE.write_text(json.dumps(self._ce_scores))
 
     def ce_scores(self, key, q, texts):
-        """Cross-encoder scores, computed once per (reranker, query, passage) and cached on disk."""
+        """Cross-encoder scores; with cache=True computed once per (reranker, query, passage)."""
+        if not self.cache:
+            return [float(x) for x in self.cross_encoder(key).predict([(q, t) for t in texts], show_progress_bar=False)]
         keys = [f"{key}|{q}|{hashlib.sha256(t.encode()).hexdigest()}" for t in texts]
         missing = [i for i, k in enumerate(keys) if k not in self._ce_scores]
         if missing:
@@ -120,9 +128,12 @@ class Retriever:
 
     def qvec(self, text, prefix):
         key = (text, prefix)
-        if key not in self._qcache:
-            self._qcache[key] = embed(self.model, [(QUERY_INSTRUCTION if prefix else "") + text])[0]
-        return self._qcache[key]
+        if key in self._qcache:
+            return self._qcache[key]
+        vec = embed(self.model, [(QUERY_INSTRUCTION if prefix else "") + text])[0]
+        if self.cache:
+            self._qcache[key] = vec
+        return vec
 
     def cross_encoder(self, key):
         if key not in self._ce:

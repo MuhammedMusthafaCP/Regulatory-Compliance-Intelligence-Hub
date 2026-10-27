@@ -211,3 +211,24 @@ def test_provisions_are_limited_to_a_score_band_around_the_best(engine, monkeypa
 def test_provision_count_never_exceeds_top_k(engine, monkeypatch):
     monkeypatch.setattr(PL, "CONFIG", R.Config("t", rerank="fake", sources="d", source_k=3))
     assert len(PL.retrieve_evidence(engine, "data subject personal data", top_k=2, band=1.0)["provisions"]) <= 2
+
+
+def test_serving_mode_remembers_nothing(tmp_path, monkeypatch):
+    monkeypatch.setattr(R, "CE_CACHE", tmp_path / "ce.json")
+    model = FakeModel()
+    corpus = R.Corpus([{"ordinal": 0, "chunk_id": "t0", "type": "article", "article_number": 1, "paragraph": "1",
+                        "point": None, "citation": "Article 1(1)", "article_title": "T", "chapter_title": None,
+                        "recital_number": None, "text": "right to erasure of personal data"}],
+                      {"A": model.encode(["right to erasure of personal data"])})
+    ret = R.Retriever(corpus, model, cache=False)
+    ret._ce["fake"] = FakeCE()
+    ret.search("erasure of personal data", R.Config("c", rerank="fake", sources="d", source_k=1))
+    ret.save_cache()
+    assert ret._qcache == {} and ret._ce_scores == {} and not (tmp_path / "ce.json").exists()
+
+
+def test_provisions_carry_chunk_id_and_source_link(engine, monkeypatch):
+    monkeypatch.setattr(PL, "CONFIG", R.Config("t", rerank="fake", sources="d", source_k=3))
+    out = PL.retrieve_evidence(engine, "data subject right to obtain erasure of personal data")
+    first = out["provisions"][0]
+    assert first["chunk_id"] == "t0" and first["source_url"] is None   # fake corpus has no URLs

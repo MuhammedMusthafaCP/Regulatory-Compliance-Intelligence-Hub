@@ -53,7 +53,8 @@ def retrieve_evidence(retriever, question, top_k=TOP_PROVISIONS, context_k=CONTE
 
 
 def _item(m, score, role):
-    d = {"role": role, "citation": m["citation"], "text": m["text"], "score": round(float(score), 3)}
+    d = {"role": role, "citation": m["citation"], "text": m["text"], "score": round(float(score), 3),
+         "chunk_id": m["chunk_id"], "source_url": m.get("source_url")}
     if m["type"] == "article":
         d["article"] = m["article_number"]
         d["article_title"] = m["article_title"]
