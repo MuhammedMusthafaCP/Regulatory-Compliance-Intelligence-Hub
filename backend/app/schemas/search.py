@@ -49,7 +49,7 @@ class SearchResponse(BaseModel):
 
 
 class SearchStatus(BaseModel):
-    state: Literal["loading", "ready", "unavailable", "failed"]
+    state: Literal["loading", "ready", "not_configured", "failed"]
     ready: bool
 
 

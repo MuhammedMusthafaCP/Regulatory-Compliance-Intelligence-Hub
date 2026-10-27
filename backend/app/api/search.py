@@ -22,13 +22,21 @@ async def search_status(service: SearchService = Depends(get_search_service)) ->
     return SearchStatus(state=service.state, ready=service.ready)
 
 
+@router.post("/restart", response_model=SearchStatus)
+async def restart_search(service: SearchService = Depends(get_search_service)) -> SearchStatus:
+    """Ask a failed engine to start again. Rate-limited: it only acts when the state is `failed` and 30 s have passed
+    since the last failure; otherwise it just returns the current state."""
+    state = service.restart()
+    return SearchStatus(state=state, ready=service.ready)
+
+
 @router.post(
     "",
     response_model=SearchResponse,
     responses={
         429: {"model": ErrorResponse, "description": "Too many searches queued"},
         500: {"model": ErrorResponse, "description": "Unexpected failure"},
-        503: {"model": ErrorResponse, "description": "Engine starting up or unavailable"},
+        503: {"model": ErrorResponse, "description": "`search_loading` (starting), `search_unavailable` (failed, temporary) or `search_not_configured`"},
         504: {"model": ErrorResponse, "description": "Search timed out"},
     },
 )

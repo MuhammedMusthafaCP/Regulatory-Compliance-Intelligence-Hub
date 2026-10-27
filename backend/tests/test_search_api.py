@@ -18,8 +18,15 @@ NO_BASIS = {"question": "Tax in France?", "status": "no_basis", "confidence": 0.
 
 
 class FakeService:
-    def __init__(self, state="ready", result=None, error=None):
+    def __init__(self, state="ready", result=None, error=None, restart_to=None):
         self.state, self.result, self.error, self.questions = state, result, error, []
+        self.restart_to, self.restarts = restart_to, 0
+
+    def restart(self):
+        self.restarts += 1
+        if self.restart_to:
+            self.state = self.restart_to
+        return self.state
 
     @property
     def ready(self):
@@ -84,7 +91,8 @@ def test_a_question_of_exactly_the_maximum_length_is_accepted(client):
 
 @pytest.mark.parametrize("error,status,code,retry", [
     (SearchError("search_loading", "starting up", 503, retry_after=5), 503, "search_loading", "5"),
-    (SearchError("search_unavailable", "not available", 503), 503, "search_unavailable", None),
+    (SearchError("search_not_configured", "not configured", 503), 503, "search_not_configured", None),
+    (SearchError("search_unavailable", "temporarily down", 503, retry_after=30), 503, "search_unavailable", "30"),
     (SearchError("search_busy", "busy", 429, retry_after=5), 429, "search_busy", "5"),
     (SearchError("search_timeout", "too slow", 504), 504, "search_timeout", None),
 ])
@@ -107,14 +115,34 @@ def test_malformed_pipeline_output_is_a_500_not_a_crash(client):
     assert r.status_code == 500 and "maybe" not in r.text
 
 
-@pytest.mark.parametrize("state,ready", [("loading", False), ("ready", True), ("unavailable", False), ("failed", False)])
+@pytest.mark.parametrize("state,ready", [("loading", False), ("ready", True), ("not_configured", False), ("failed", False)])
 def test_status_endpoint_reports_the_engine_state(client, state, ready):
     r = client(FakeService(state=state)).get("/api/search/status")
     assert r.status_code == 200 and r.json() == {"state": state, "ready": ready}
+
+
+def test_restart_endpoint_reports_the_state_after_the_attempt(client):
+    svc = FakeService(state="failed", restart_to="loading")
+    r = client(svc).post("/api/search/restart")
+    assert r.status_code == 200 and r.json() == {"state": "loading", "ready": False} and svc.restarts == 1
+
+
+def test_restart_endpoint_is_harmless_when_nothing_needs_restarting(client):
+    svc = FakeService(state="not_configured")
+    r = client(svc).post("/api/search/restart")
+    assert r.json() == {"state": "not_configured", "ready": False}
+
+
+def test_unconfigured_and_temporary_failures_are_different_to_a_client(client):
+    """The UI explains these differently and only offers a retry for the temporary one."""
+    not_configured = post(client(FakeService(error=SearchError("search_not_configured", "x", 503))), {"question": "q"})
+    temporary = post(client(FakeService(error=SearchError("search_unavailable", "x", 503, retry_after=30))), {"question": "q"})
+    assert not_configured.json()["detail"]["code"] != temporary.json()["detail"]["code"]
+    assert "retry-after" not in not_configured.headers and temporary.headers["retry-after"] == "30"
 
 
 def test_existing_routes_are_unchanged(client):
     c = client(FakeService())
     assert c.get("/").json() == {"service": "Regulatory & Compliance Intelligence Hub", "status": "online"}
     paths = {r.path for r in app.routes}
-    assert {"/api/health", "/api/search", "/api/search/status"} <= paths
+    assert {"/api/health", "/api/search", "/api/search/status", "/api/search/restart"} <= paths

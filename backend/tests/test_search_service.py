@@ -33,7 +33,7 @@ def test_start_makes_the_service_ready_and_search_runs_the_runner():
     assert state == "ready" and result == {"answer": "hello", "engine": "engine"}
 
 
-def test_missing_dependencies_mark_the_service_unavailable_not_failed():
+def test_missing_dependencies_mark_the_service_not_configured_not_failed():
     def loader():
         raise ImportError("No module named 'torch'")
     async def go():
@@ -42,24 +42,72 @@ def test_missing_dependencies_mark_the_service_unavailable_not_failed():
         with pytest.raises(SearchError) as e:
             await svc.search("q")
         return svc.state, e.value.code
-    assert run(go()) == ("unavailable", "search_unavailable")
+    assert run(go()) == ("not_configured", "search_not_configured")
 
 
-def test_loader_crash_is_recorded_and_start_never_raises():
+def test_loader_crash_is_a_temporary_failure_with_its_own_code_and_retry_hint():
     def loader():
         raise RuntimeError("database unreachable")
     async def go():
-        svc = make(loader=loader)
+        svc = make(loader=loader, restart_cooldown=30)
         await svc.start()
-        return svc.state
-    assert run(go()) == "failed"
+        with pytest.raises(SearchError) as e:
+            await svc.search("q")
+        return svc.state, e.value
+    state, err = run(go())
+    assert state == "failed"
+    assert (err.code, err.status_code, err.retry_after) == ("search_unavailable", 503, 30)
+    assert "database" not in err.message and "RuntimeError" not in err.message     # nothing internal reaches the client
 
 
-def test_disabled_service_is_unavailable():
+def test_disabled_service_is_not_configured_and_has_no_retry_hint():
     svc = SearchService.disabled()
     with pytest.raises(SearchError) as e:
         run(svc.search("q"))
-    assert svc.state == "unavailable" and e.value.code == "search_unavailable"
+    assert svc.state == "not_configured"
+    assert (e.value.code, e.value.status_code, e.value.retry_after) == ("search_not_configured", 503, None)
+
+
+def test_restart_recovers_a_failed_engine_once_the_cooldown_has_passed():
+    attempts = []
+    def loader():
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise RuntimeError("database unreachable")
+        return "engine"
+    async def go():
+        svc = make(loader=loader, restart_cooldown=0)
+        await svc.start()
+        assert svc.state == "failed"
+        assert svc.restart() == "loading"            # accepted: a new load is running
+        await svc._restart_task
+        return svc.state, await svc.search("hello"), len(attempts)
+    state, result, n = run(go())
+    assert state == "ready" and result["engine"] == "engine" and n == 2
+
+
+def test_restart_is_rate_limited_so_clicks_cannot_trigger_repeated_loads():
+    attempts = []
+    def loader():
+        attempts.append(1)
+        raise RuntimeError("still down")
+    async def go():
+        svc = make(loader=loader, restart_cooldown=3600)
+        await svc.start()
+        states = [svc.restart() for _ in range(5)]   # five rapid retries
+        return states, len(attempts)
+    states, n = run(go())
+    assert states == ["failed"] * 5 and n == 1       # no extra load was started
+
+
+def test_restart_does_nothing_unless_the_engine_has_failed():
+    async def go():
+        ready = make()
+        await ready.start()
+        not_configured = SearchService.disabled()
+        loading = make()
+        return ready.restart(), not_configured.restart(), loading.restart()
+    assert run(go()) == ("ready", "not_configured", "loading")
 
 
 def test_searches_run_one_at_a_time_on_one_worker_thread():
@@ -149,4 +197,4 @@ def test_default_loader_reports_unavailable_when_the_pipeline_is_not_installed(m
             await svc.search("q")
         svc.close()
         return svc.state, e.value.code, e.value.status_code
-    assert run(go()) == ("unavailable", "search_unavailable", 503)
+    assert run(go()) == ("not_configured", "search_not_configured", 503)

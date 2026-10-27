@@ -5,13 +5,20 @@ The pipeline is synchronous and heavy (embedding model, cross-encoder, GPU), so:
   * every search runs on ONE dedicated worker thread (the model stays on one thread, the GPU is never
     used concurrently), with a bounded queue and a timeout so load cannot pile up silently.
 
-The pipeline itself is imported lazily from the repository's `ingestion` package; if it (or its
-dependencies from requirements-search.txt) is missing, the service reports "unavailable" instead of failing.
+The pipeline itself is imported lazily from the repository's `ingestion` package.
+
+Engine states, which the API reports and the UI explains differently:
+  loading         starting up (or retrying after a failure); transient
+  ready           serving searches
+  not_configured  disabled (SEARCH_ENABLED=false) or its dependencies are not installed; an administrator has to act
+  failed          it was configured but crashed while starting (database unreachable, models missing, ...);
+                  may be temporary, so `restart()` can try again, rate-limited
 """
 import asyncio
 import logging
 import os
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -52,18 +59,21 @@ def run_pipeline(retriever, question: str) -> dict:
 
 
 class SearchService:
-    def __init__(self, loader=load_pipeline, runner=run_pipeline, *, max_queue: int = 8, timeout: float = 60.0):
+    def __init__(self, loader=load_pipeline, runner=run_pipeline, *, max_queue: int = 8, timeout: float = 60.0,
+                 restart_cooldown: float = 30.0):
         self.state = "loading"
         self._loader, self._runner = loader, runner
-        self._max_queue, self._timeout = max_queue, timeout
+        self._max_queue, self._timeout, self._restart_cooldown = max_queue, timeout, restart_cooldown
         self._engine = None
         self._pending = 0
+        self._failed_at: float | None = None
+        self._restart_task: asyncio.Task | None = None
         self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="search")
 
     @classmethod
     def disabled(cls) -> "SearchService":
         service = cls()
-        service.state = "unavailable"
+        service.state = "not_configured"
         return service
 
     @property
@@ -77,17 +87,32 @@ class SearchService:
             self.state = "ready"
             logger.info("search engine ready")
         except ImportError:
-            self.state = "unavailable"
-            logger.warning("search engine unavailable: ingestion package or requirements-search.txt not installed")
+            self.state = "not_configured"
+            logger.warning("search engine not configured: ingestion package or requirements-search.txt not installed")
         except Exception:  # noqa: BLE001
+            self._failed_at = time.monotonic()
             self.state = "failed"
             logger.exception("search engine failed to start")
+
+    def restart(self) -> str:
+        """Try to start again after a failure. Only acts when the state is "failed" and the cooldown since the
+        last failure has passed, so repeated calls cannot trigger repeated expensive loads. Returns the state."""
+        if self.state != "failed":
+            return self.state
+        if self._failed_at is not None and time.monotonic() - self._failed_at < self._restart_cooldown:
+            return self.state
+        self.state = "loading"
+        self._restart_task = asyncio.get_running_loop().create_task(self.start())
+        return self.state
 
     async def search(self, question: str) -> dict:
         if self.state == "loading":
             raise SearchError("search_loading", "The search engine is starting up. Please try again in a few seconds.", 503, retry_after=5)
-        if self.state != "ready":
-            raise SearchError("search_unavailable", "Search is not available on this server.", 503)
+        if self.state == "not_configured":
+            raise SearchError("search_not_configured", "Search has not been configured on this server.", 503)
+        if self.state != "ready":  # failed
+            raise SearchError("search_unavailable", "The search service is temporarily unavailable. Please try again in a few minutes.",
+                              503, retry_after=int(self._restart_cooldown))
         if self._pending >= self._max_queue:
             raise SearchError("search_busy", "The search engine is busy. Please try again shortly.", 429, retry_after=5)
 
@@ -106,4 +131,6 @@ class SearchService:
             future.exception()   # mark retrieved so an abandoned failure is not logged as "never retrieved"
 
     def close(self) -> None:
+        if self._restart_task:
+            self._restart_task.cancel()
         self._pool.shutdown(wait=False, cancel_futures=True)
