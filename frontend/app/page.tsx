@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 type HealthResponse = {
@@ -62,6 +63,9 @@ export default function DashboardPage() {
           <h1 className="mt-2 text-3xl font-semibold text-white">
             Regulatory &amp; Compliance Intelligence Hub
           </h1>
+          <Link href="/search" className="mt-4 inline-block text-sm font-medium text-indigo-300 underline underline-offset-4 hover:text-indigo-200">
+            Search the GDPR →
+          </Link>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
             Executive operational dashboard verifying end-to-end connectivity
             across the user interface, application processing engine, and

@@ -24,3 +24,6 @@ ingestion/.venv/
 
 # Cached cross-encoder scores (regenerable)
 evaluation/results/.rerank_cache.json
+
+# TypeScript incremental build info
+*.tsbuildinfo
