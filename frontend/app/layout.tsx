@@ -3,9 +3,10 @@ import Link from "next/link";
 import "@fontsource-variable/newsreader";
 import "@fontsource-variable/public-sans";
 import "./globals.css";
+import SiteFooter from "./_components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Regulatory & Compliance Intelligence Hub",
+  title: { default: "Regulatory & Compliance Intelligence Hub", template: "%s · Regulatory & Compliance Intelligence Hub" },
   description:
     "Ask a plain-language question and get the GDPR provisions that answer it, each cited to its article, with an honest signal when the Regulation doesn't support an answer.",
 };
@@ -25,12 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <div className="flex-1">{children}</div>
 
-        <footer className="border-t border-rule">
-          <p className="mx-auto w-full max-w-6xl px-4 py-6 text-ui text-ink-muted sm:px-6 lg:px-8">
-            Source: Regulation (EU) 2016/679 as published in the Official Journal on 4 May 2016 (EUR-Lex). Search results
-            point to the text; they are not legal advice.
-          </p>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

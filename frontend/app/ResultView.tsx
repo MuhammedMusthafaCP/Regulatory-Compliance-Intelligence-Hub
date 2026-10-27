@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { forwardRef, useId, useState } from "react";
 import { eurLexUrl, type ContextRecital, type EvidenceStatus, type Provision, type SearchResult } from "./api";
 
@@ -76,6 +77,18 @@ const ResultView = forwardRef<HTMLHeadingElement, { result: SearchResult }>(func
           )}
         </div>
       )}
+
+      <p className="mt-12 max-w-[68ch] border-t border-rule pt-4 text-ui text-ink-muted">
+        Quotes Regulation (EU) 2016/679 as published in the Official Journal on 4 May 2016 (EUR-Lex). Check important
+        points against the official text. This is not legal advice; see the{" "}
+        <Link
+          href="/disclaimer"
+          className="rounded-sm font-medium text-brand underline decoration-lake decoration-2 underline-offset-4 hover:text-brand-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+        >
+          Disclaimer
+        </Link>
+        .
+      </p>
     </section>
   );
 });
