@@ -2,8 +2,12 @@
 COMPOSE := docker compose -f docker/docker-compose.yml
 export COMPOSE_BAKE := true
 
+# Root CA of a TLS-inspecting proxy, trusted only while downloading during the image build (see `make ca`).
+CA_NAME ?= Gateway CA - Cloudflare Managed
+export EXTRA_CA_FILE := $(if $(wildcard docker/extra-ca.pem),$(abspath docker/extra-ca.pem),/dev/null)
+
 .DEFAULT_GOAL := help
-.PHONY: help up down logs ps migrate rebuild
+.PHONY: help up down logs ps migrate rebuild ca
 
 help: ## Show this help
 	@awk -F':.*## ' '/^[a-z]+:.*## /{printf "  make %-9s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -23,6 +27,11 @@ logs: ## Follow logs
 
 ps: ## Show container status
 	$(COMPOSE) ps
+
+ca: ## macOS: export your network's TLS-inspection root CA so image builds can download (README: Troubleshooting)
+	@security find-certificate -a -p -c "$(CA_NAME)" > docker/extra-ca.pem
+	@test -s docker/extra-ca.pem || { rm -f docker/extra-ca.pem; echo "No certificate matching '$(CA_NAME)' in the keychain. Set CA_NAME=..." >&2; exit 1; }
+	@echo "Wrote docker/extra-ca.pem ($$(grep -c BEGIN docker/extra-ca.pem) certificate); the next build trusts it."
 
 migrate: backend/.env ## Run alembic upgrade head in the backend container
 	$(COMPOSE) run --rm --no-deps backend alembic upgrade head

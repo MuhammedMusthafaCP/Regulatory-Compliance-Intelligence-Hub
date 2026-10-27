@@ -27,3 +27,6 @@ evaluation/results/.rerank_cache.json
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Optional TLS-inspection root CA for Docker builds (make ca)
+docker/extra-ca.pem

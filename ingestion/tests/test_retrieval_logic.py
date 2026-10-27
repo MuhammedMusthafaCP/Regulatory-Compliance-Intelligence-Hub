@@ -232,3 +232,19 @@ def test_provisions_carry_chunk_id_and_source_link(engine, monkeypatch):
     out = PL.retrieve_evidence(engine, "data subject right to obtain erasure of personal data")
     first = out["provisions"][0]
     assert first["chunk_id"] == "t0" and first["source_url"] is None   # fake corpus has no URLs
+
+
+def test_fetch_models_downloads_only_the_pinned_revisions_without_pickle_weights(monkeypatch):
+    from ingestion import fetch_models as F
+    from ingestion.embedding import MODEL, REVISION
+    from ingestion.rerank import PIPELINE_RERANKER, RERANKERS
+
+    calls = []
+    monkeypatch.setattr(F, "snapshot_download", lambda **kw: calls.append(kw) or "/cache/x")
+    assert F.main([]) == 0
+    assert [(c["repo_id"], c["revision"]) for c in calls] == [(MODEL, REVISION), RERANKERS[PIPELINE_RERANKER]]
+    assert all("*.bin" in c["ignore_patterns"] and "onnx/*" in c["ignore_patterns"] for c in calls)
+    calls.clear()
+    F.main(["--all"])
+    assert len(calls) == 1 + len(RERANKERS)
+    assert PL.CONFIG.rerank == PIPELINE_RERANKER   # the pipeline and the model fetch share one source of truth

@@ -10,9 +10,10 @@ context only: they are never ranked against articles and never returned as the a
 Thresholds were calibrated on the dev set only; they belong to this reranker revision and must be
 re-calibrated if the model changes.
 """
+from .rerank import PIPELINE_RERANKER
 from .retrieval import Config, Retriever
 
-CONFIG = Config("final", variant="A", rerank="mxbai-base", rerank_top=30, sources="db", source_k=15)
+CONFIG = Config("final", variant="A", rerank=PIPELINE_RERANKER, rerank_top=30, sources="db", source_k=15)
 NO_BASIS_BELOW = 0.2     # reranker top-1 score; below this the sources do not support an answer
 SUPPORTED_FROM = 0.5     # at or above this the top provision is treated as directly supporting
 TOP_PROVISIONS = 5       # never show more than this many operative chunks

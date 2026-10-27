@@ -8,6 +8,9 @@ RERANKERS = {
 }
 
 
+PIPELINE_RERANKER = "mxbai-base"   # the reranker the chosen pipeline uses (ADR 0002)
+
+
 def device():
     """Apple GPU (MPS) when available: ~10x faster than CPU here with the same scores (max diff 5e-4).
     Override with RERANK_DEVICE=cpu. Embeddings stay on CPU so they match the stored vectors exactly."""

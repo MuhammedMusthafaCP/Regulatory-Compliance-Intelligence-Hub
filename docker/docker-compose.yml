@@ -5,13 +5,18 @@
 #   sync+restart  - copy and restart the process (config read only at startup)
 #   rebuild       - rebuild the image and recreate the container (dependency changes)
 # The database is external (Neon), so there is no db service.
+#
+# The backend image includes the GDPR search engine (CPU torch + the pinned models, ~1.9 GB): the first build
+# takes several minutes, the engine loads in the background after the API starts (~15 s), and a search takes
+# about 2.5-4.5 s on CPU because containers cannot use Apple's GPU.
 name: rcih
 
 services:
   backend:
     build:
-      context: ../backend
-      dockerfile: ../docker/backend.Dockerfile
+      context: ..                      # repo root: the image also needs ingestion/ (the search pipeline)
+      dockerfile: docker/backend.Dockerfile
+      secrets: [extra_ca]              # optional TLS-inspection root CA for downloads during the build
     ports:
       - "7001:8000"
     env_file: ../backend/.env
@@ -25,7 +30,11 @@ services:
       watch:
         - {action: sync, path: ../backend/app, target: /app/app, ignore: ["**/__pycache__"]}
         - {action: sync, path: ../backend/alembic, target: /app/alembic}
+        - {action: sync, path: ../ingestion, target: /app/ingestion, ignore: ["**/__pycache__", "tests/", ".venv/"]}
+        - {action: rebuild, path: ../ingestion/embedding.py}   # pinned model revisions: re-download the models
+        - {action: rebuild, path: ../ingestion/rerank.py}
         - {action: rebuild, path: ../backend/requirements.txt}
+        - {action: rebuild, path: ../backend/requirements-search.txt}
         - {action: rebuild, path: ../backend/.env}
         - {action: rebuild, path: ../docker/backend.Dockerfile}
 
@@ -48,3 +57,8 @@ services:
         - {action: rebuild, path: ../frontend/package.json}
         - {action: rebuild, path: ../frontend/package-lock.json}
         - {action: rebuild, path: ../docker/frontend.Dockerfile}
+
+secrets:
+  # `make ca` writes docker/extra-ca.pem when your network inspects HTTPS; otherwise this is an empty file.
+  extra_ca:
+    file: ${EXTRA_CA_FILE:-/dev/null}

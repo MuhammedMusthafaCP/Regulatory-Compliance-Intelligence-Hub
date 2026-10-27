@@ -1,0 +1,12 @@
+# Used automatically by BuildKit for backend.Dockerfile (build context = repo root).
+# Whitelist: everything is excluded except what the image copies, so .venv, node_modules, data/ and .git
+# are never sent to the builder.
+*
+!docker/with-extra-ca.sh
+!backend/requirements.txt
+!backend/requirements-search.txt
+!backend/alembic.ini
+!backend/alembic
+!backend/app
+!ingestion/*.py
+**/__pycache__

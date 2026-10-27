@@ -17,7 +17,9 @@ from pathlib import Path
 
 logger = logging.getLogger("app.search")
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+# Where the `ingestion` package may live: the repository root when running from a checkout
+# (backend/app/services/search.py -> parents[3]), or the app directory inside the Docker image (parents[2]).
+SEARCH_PATHS = [Path(__file__).resolve().parents[3], Path(__file__).resolve().parents[2]]
 
 
 class SearchError(Exception):
@@ -31,8 +33,9 @@ class SearchError(Exception):
 def load_pipeline():
     """Default loader: build the retriever from the repository's ingestion package."""
     os.environ.setdefault("HF_HUB_OFFLINE", "1")   # pinned models are cached by the ingestion scripts
-    if (REPO_ROOT / "ingestion").is_dir() and str(REPO_ROOT) not in sys.path:
-        sys.path.insert(0, str(REPO_ROOT))
+    for root in SEARCH_PATHS:
+        if (root / "ingestion").is_dir() and str(root) not in sys.path:
+            sys.path.insert(0, str(root))
     from ingestion.embedding import load_model
     from ingestion.pipeline import retrieve_evidence
     from ingestion.retrieval import Corpus, Retriever
