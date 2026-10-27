@@ -38,12 +38,17 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 │   ├── .env.example              # Template for backend/.env (not committed)
 │   ├── Makefile                  # `make dev` – run API with auto-reload
 │   ├── requirements.txt
+│   ├── requirements-search.txt   # Optional: torch etc. so the API can run the GDPR search (see "GDPR search")
+│   ├── requirements-dev.txt      # pytest + httpx; tests live in backend/tests/
 │   ├── alembic.ini               # URL left blank; injected from settings at runtime
 │   ├── alembic/
 │   │   ├── env.py                # Async Alembic env, reads DATABASE_URL from app settings
 │   │   └── versions/             # Migrations: health_checks + pgvector; documents/chunks; chunk_embeddings
 │   └── app/
-│       ├── main.py               # FastAPI app, CORS, `/` and `/api/health` routes
+│       ├── main.py               # FastAPI app, CORS, lifespan (starts the search engine), `/` and `/api/health`
+│       ├── api/search.py         # `POST /api/search`, `GET /api/search/status` (thin: validation, error mapping)
+│       ├── schemas/search.py     # Pydantic request/response models
+│       ├── services/search.py    # Runs the ingestion pipeline: background load, one worker thread, queue limit, timeout
 │       ├── core/config.py        # Settings (pydantic-settings, loads backend/.env)
 │       ├── db/session.py         # Async engine (capped pool) + `get_db` dependency
 │       └── models/
@@ -56,7 +61,8 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
 │   ├── raw/gdpr/                 # Untouched EUR-Lex HTML + metadata.json (source of truth)
 │   └── parsed/gdpr/              # Generated JSON: articles, recitals, chunks, validation reports
 ├── evaluation/                   # Question sets (dev, held-out, out-of-scope), recital reference, results (baseline preserved)
-├── docs/adr/                     # Architecture decision records (0001 roadmap, 0002 retrieval pipeline)
+├── docs/adr/                     # Architecture decision records (0001 roadmap, 0002 retrieval pipeline, 0003 serving it)
+├── docs/issues/                  # Tracked known issues
 └── frontend/
     ├── .env.local                # NEXT_PUBLIC_API_URL (non-secret, committed)
     ├── package.json
@@ -65,13 +71,15 @@ Exact backend versions are pinned in [backend/requirements.txt](backend/requirem
     └── app/
         ├── layout.tsx            # Root layout and metadata
         ├── page.tsx              # Dashboard with the diagnostic button and status badge
+        ├── search/               # GDPR search page (own layout/theme): page, SearchForm, ResultView, api.ts
         └── globals.css
 ```
 
 ## Frontend
 
 - **Architecture:** Single Next.js App Router page ([frontend/app/page.tsx](frontend/app/page.tsx)), a client component. It holds the diagnostic state (`idle` / `loading` / `success` / `error`), calls `${NEXT_PUBLIC_API_URL}/api/health` with `fetch`, and renders the JSON result. While loading, it shows a "database may be waking up" message and disables the button to prevent duplicate submissions.
-- **Styling:** Tailwind CSS (dark slate theme). Tailwind scans `app/**` and `components/**`.
+- **Search page:** [frontend/app/search/](frontend/app/search/) at `/search`, a client page with its own layout and theme. It calls the search API, shows idle / searching / result / out-of-scope / error / engine-starting states, moves focus to the results for keyboard and screen-reader users, and validates every API response with Zod before rendering. Provisions (the operative text) and recitals (interpretive context) are shown separately. Fonts (Newsreader for headings, Public Sans for UI) are self-hosted through npm packages, so the page makes no third-party requests.
+- **Styling:** Tailwind CSS. The dashboard keeps its dark slate theme; the search page uses the blue-led palette defined as tokens in [frontend/tailwind.config.ts](frontend/tailwind.config.ts) (`brand` #3368A0, `lake` #66A3BF, `foam` #C8DFDB, `paper` #F2EFE7; `lake` is for rules and accents only, it is too light for text). Tailwind scans `app/**` and `components/**`.
 - **Dev server port:** `4001` (set in the `dev` script). The backend's default CORS origin matches this.
 
 Commands (run from `frontend/`):
@@ -96,7 +104,23 @@ Commands (run from `frontend/`):
 | `GET` | `/` | Liveness: `{"service": ..., "status": "online"}` |
 | `GET` | `/api/health` | Writes a `health_checks` row (with a sample vector), reads the latest row back. Returns `200` with `api_status`, `database_status`, `write_verified`, `read_verified`, `vector_support_verified`, `latest_record`, `checked_at`; returns `503` with a `detail` message if the DB step fails. |
 
+| `GET` | `/api/search/status` | `{"state": "loading" \| "ready" \| "unavailable" \| "failed", "ready": bool}`. The engine loads in the background after startup (tens of seconds). |
+| `POST` | `/api/search` | Body `{"question": "..."}` (1 to 500 characters, trimmed). Returns `200` with `status` (`supported` / `weak_evidence` / `no_basis`), `confidence`, `note`, `provisions` (operative article chunks, each with `citation`, `article`, `article_title`, `text`, `chunk_id`, `source_url`), `context` (recitals, interpretive only) and `took_ms`. Out-of-scope questions return `200` with `no_basis` and empty lists. Errors use `{"detail": {"code", "message"}}`: `422` invalid input (FastAPI's standard validation body), `429 search_busy`, `503 search_loading` / `search_unavailable`, `504 search_timeout`, `500 search_failed` (generic message; details only in the server log). `Retry-After` is set on retryable `429`/`503`. |
+
 FastAPI's interactive docs are served at http://localhost:7001/docs.
+
+### GDPR search
+
+The API reuses the evaluated retrieval pipeline from `ingestion/` ([ADR 0002](docs/adr/0002-retrieval-pipeline-and-abstention.md)); nothing is duplicated. How it is served is in [ADR 0003](docs/adr/0003-serving-the-search-pipeline.md): models load once in the background, searches run one at a time on a dedicated thread (bounded queue, 60 s timeout), and nothing is cached between requests.
+
+To enable it locally (from `backend/`, with the virtualenv active):
+
+```bash
+pip install -r requirements-search.txt        # torch, sentence-transformers, ... (several GB)
+make dev                                      # API on :7001; GET /api/search/status turns "ready" after the models load
+```
+
+The two models (embedding model and reranker) are downloaded by the ingestion scripts (`ingestion/.venv/bin/python -m ingestion.search_chunks "test"` once); the API then runs offline (`HF_HUB_OFFLINE=1` is set by default) against that cache. On Apple Silicon the reranker uses the GPU (about 2 s per search); on CPU expect roughly 20 s (an estimate extrapolated from the CPU reranking speed measured earlier, not a benchmark of this API). **The Docker image does not include these dependencies**, so there the endpoint reports `search_unavailable` and the page says so; run the backend natively for search until a dedicated retrieval service is added.
 
 > Note: `/api/health` **writes a row on every call**, so the `health_checks` table grows with each diagnostic. The `/api` prefix comes from `API_V1_PREFIX`.
 
@@ -154,6 +178,9 @@ Never commit real credentials. `backend/.env` is git-ignored.
 | `API_V1_PREFIX` | No | `/api` | Prefix for API routes |
 | `DB_POOL_SIZE` | No | `5` | Base connection pool size |
 | `DB_MAX_OVERFLOW` | No | `5` | Extra connections beyond the pool |
+| `SEARCH_ENABLED` | No | `true` | Load the search engine at startup. With `false`, or without `requirements-search.txt`, search reports `unavailable` |
+| `SEARCH_MAX_QUEUE` | No | `8` | Searches allowed to wait for the single inference worker; more get `429` |
+| `SEARCH_TIMEOUT_SECONDS` | No | `60` | Per-search limit before `504` |
 
 The backend reads `.env` relative to the working directory, so run backend commands from `backend/`.
 
@@ -212,7 +239,9 @@ Everything lives in the root [Makefile](Makefile) and [docker/](docker/) (compos
 
 Install the test dependency with `ingestion/.venv/bin/pip install -r ingestion/requirements-dev.txt`. Retrieval *quality* is measured separately by the evaluation sets (see [ADR 0002](docs/adr/0002-retrieval-pipeline-and-abstention.md)).
 
-**Backend and frontend:** there is no automated test suite yet (no backend or frontend tests, and no linter configuration). `npm run lint` is defined in `package.json` but ESLint is not installed or configured, so it isn't usable as-is. For now, the end-to-end check is the diagnostic described in step 4 above. For a quick type check of the frontend, run `npx tsc --noEmit` from `frontend/`.
+**Backend** (`backend/tests/`, 31 tests, no database or models needed): `cd backend && pip install -r requirements-dev.txt && python -m pytest`. Covers the search API contract (shape, validation, status codes, no leaked internals, unchanged existing routes) and the search service (loading states, one-at-a-time execution, queue limit, timeout, degrading to `unavailable` when the pipeline is not installed).
+
+**Frontend:** no automated tests and no linter (`npm run lint` is defined but ESLint is not installed or configured, so it isn't usable as-is). Checks that work: `npx tsc --noEmit` and `npm run build` from `frontend/`.
 
 ## Build and Deployment
 
