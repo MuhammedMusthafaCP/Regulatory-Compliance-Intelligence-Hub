@@ -4,9 +4,9 @@ import { footerNav, site } from "../_content/site";
 export default function SiteFooter() {
   return (
     <footer className="border-t border-rule">
-      <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_repeat(3,minmax(0,1fr))]">
-          <div>
+      <div className="mx-auto w-full max-w-[90rem] px-5 py-12 sm:px-8 lg:px-12">
+        <div className="grid gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-4">
             <p className="font-display text-heading font-semibold tracking-tight">
               <span aria-hidden className="mr-2 text-brand">§</span>
               {site.name}
@@ -16,7 +16,7 @@ export default function SiteFooter() {
             </p>
           </div>
 
-          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:col-span-3">
+          <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 lg:col-span-7 lg:col-start-6">
             {footerNav.map((group) => (
               <div key={group.title}>
                 <h2 className="text-meta font-semibold uppercase text-ink-muted">{group.title}</h2>
@@ -37,9 +37,12 @@ export default function SiteFooter() {
           </nav>
         </div>
 
-        <p className="mt-10 border-t border-rule pt-6 text-ui text-ink-muted">
-          © {new Date().getFullYear()} {site.name}. All rights reserved.
-        </p>
+        <div className="mt-10 flex flex-col gap-2 border-t border-rule pt-6 text-ui text-ink-muted sm:flex-row sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
+          </p>
+          <p>Source text: {site.regulation}</p>
+        </div>
       </div>
     </footer>
   );

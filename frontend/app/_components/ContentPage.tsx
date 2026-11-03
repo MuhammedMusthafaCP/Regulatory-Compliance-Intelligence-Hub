@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import PageNav from "./PageNav";
 
 export const linkClass =
   "rounded-sm font-medium text-brand underline decoration-lake decoration-2 underline-offset-4 hover:text-brand-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand";
@@ -17,14 +18,26 @@ export function ContentPage({
   children: ReactNode;
 }) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
-      <Link href="/" className={`text-ui ${linkClass}`}>
-        <span aria-hidden>← </span>Back to search
-      </Link>
-      <h1 className="mt-8 text-balance font-display text-display font-medium">{title}</h1>
-      {intro && <p className="mt-5 max-w-[60ch] text-body text-ink-soft">{intro}</p>}
-      {updated && <p className="mt-3 text-ui text-ink-muted">Last updated {updated}</p>}
-      <div className="mt-12 space-y-12">{children}</div>
+    <main className="mx-auto w-full max-w-[90rem] px-5 pb-20 pt-10 sm:px-8 sm:pt-14 lg:px-12 lg:pt-16">
+      <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <header className="lg:col-span-4">
+          <div className="lg:sticky lg:top-10">
+            <Link href="/" className={`text-ui ${linkClass}`}>
+              <span aria-hidden>← </span>Back to search
+            </Link>
+            <h1 className="mt-8 text-balance font-display text-display font-medium">{title}</h1>
+            {intro && <p className="mt-5 text-body text-ink-soft">{intro}</p>}
+            {updated && <p className="mt-3 text-ui text-ink-muted">Last updated {updated}</p>}
+            <div className="mt-10 hidden border-t border-rule pt-8 lg:block">
+              <PageNav />
+            </div>
+          </div>
+        </header>
+
+        <div className="space-y-12 lg:col-span-8 lg:border-l lg:border-rule lg:pl-16 [&>section+section]:border-t [&>section+section]:border-rule [&>section+section]:pt-12">
+          {children}
+        </div>
+      </div>
     </main>
   );
 }
@@ -33,7 +46,7 @@ export function Section({ id, title, children }: { id?: string; title: string; c
   return (
     <section id={id} className="scroll-mt-6">
       <h2 className="font-display text-title font-medium">{title}</h2>
-      <div className="mt-4 max-w-[68ch] space-y-4 text-body text-ink-soft">{children}</div>
+      <div className="mt-4 max-w-[72ch] space-y-4 text-body text-ink-soft">{children}</div>
     </section>
   );
 }

@@ -28,6 +28,12 @@ const EXAMPLES = [
   "Does the GDPR apply to companies based outside the EU?",
 ];
 
+const PRINCIPLES = [
+  { title: "Finds the provisions", body: "Your question is matched against the Articles and Recitals of the Regulation." },
+  { title: "Cites the article", body: "Each result quotes the text and names the Article it comes from, so you can check it." },
+  { title: "Says when it can't", body: "If the Regulation doesn't support an answer, you get that signal instead of a guess." },
+];
+
 export default function SearchPage() {
   const [question, setQuestion] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
@@ -126,50 +132,79 @@ export default function SearchPage() {
   const engineStarting = engine === "loading";
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:px-8">
-      <p className="text-meta font-semibold uppercase text-brand">Regulation (EU) 2016/679</p>
-      <h1 className="mt-3 max-w-3xl text-balance font-display text-display font-medium">What does the GDPR say?</h1>
-      <p className="mt-4 max-w-2xl text-body text-ink-soft">
-        Ask in plain language. Every result cites the article it comes from, and if the Regulation doesn&apos;t support an
-        answer, you&apos;ll be told.
-      </p>
+    <main className="mx-auto w-full max-w-[90rem] px-5 pb-20 pt-10 sm:px-8 sm:pt-14 lg:px-12 lg:pt-16">
+      <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-7">
+          <p className="text-meta font-semibold uppercase text-brand">Regulation (EU) 2016/679</p>
+          <h1 className="mt-3 max-w-3xl text-balance font-display text-display font-medium">What does the GDPR say?</h1>
+          <p className="mt-4 max-w-2xl text-body text-ink-soft">
+            Ask in plain language. Every result cites the article it comes from, and if the Regulation doesn&apos;t
+            support an answer, you&apos;ll be told.
+          </p>
 
-      <div className="mt-8 max-w-3xl">
-        <SearchForm
-          value={question}
-          onChange={(v) => {
-            setQuestion(v);
-            if (inputError) setInputError(null);
-          }}
-          onSubmit={() => run(question)}
-          busy={searching}
-          disabled={engineBlocked || engineStarting}
-          disabledLabel={engineStarting ? "Starting…" : "Search"}
-          error={inputError}
-        />
+          <div className="mt-8">
+            <SearchForm
+              value={question}
+              onChange={(v) => {
+                setQuestion(v);
+                if (inputError) setInputError(null);
+              }}
+              onSubmit={() => run(question)}
+              busy={searching}
+              disabled={engineBlocked || engineStarting}
+              disabledLabel={engineStarting ? "Starting…" : "Search"}
+              error={inputError}
+            />
 
-        <EnginePanel engine={engine} retrying={retrying} note={engineNote} onRetry={retryEngine} />
+            <EnginePanel engine={engine} retrying={retrying} note={engineNote} onRetry={retryEngine} />
 
-        <div className="mt-3 text-ui text-ink-muted">
-          <p>Try</p>
-          <ul className="mt-1 flex flex-col gap-1">
-            {EXAMPLES.map((q) => (
-              <li key={q}>
-                <button
-                  type="button"
-                  disabled={searching || engineBlocked || engineStarting}
-                  onClick={() => {
-                    setQuestion(q);
-                    run(q);
-                  }}
-                  className="text-left text-ink-soft underline decoration-lake decoration-2 underline-offset-4 hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:no-underline disabled:opacity-60"
-                >
-                  {q}
-                </button>
-              </li>
-            ))}
-          </ul>
+            <div className="mt-4 text-ui text-ink-muted">
+              <p className="text-meta font-semibold uppercase">Try</p>
+              <ul className="mt-2 divide-y divide-rule border-y border-rule">
+                {EXAMPLES.map((q) => (
+                  <li key={q}>
+                    <button
+                      type="button"
+                      disabled={searching || engineBlocked || engineStarting}
+                      onClick={() => {
+                        setQuestion(q);
+                        run(q);
+                      }}
+                      className="group flex w-full items-center justify-between gap-4 py-3 text-left text-ink-soft transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                    >
+                      {q}
+                      <span aria-hidden className="text-lake transition-transform group-hover:translate-x-1 group-disabled:translate-x-0">→</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
+
+        <aside aria-labelledby="how-heading" className="lg:col-span-5 lg:pt-8">
+          <div className="border border-rule bg-paper-raised p-6 sm:p-8">
+            <h2 id="how-heading" className="text-meta font-semibold uppercase text-ink-muted">
+              How every answer is built
+            </h2>
+            <ol className="mt-6 divide-y divide-rule">
+              {PRINCIPLES.map((p, i) => (
+                <li key={p.title} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 py-5 first:pt-0 last:pb-0">
+                  <span aria-hidden className="font-display text-title font-medium leading-none text-lake">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-display text-heading font-semibold">{p.title}</h3>
+                    <p className="mt-1 text-ui text-ink-soft">{p.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-6 border-t border-rule pt-4 text-ui text-ink-muted">
+              Quoted from the official text on EUR-Lex. Not legal advice.
+            </p>
+          </div>
+        </aside>
       </div>
 
       <div aria-live="polite" aria-busy={searching}>
@@ -185,7 +220,7 @@ export default function SearchPage() {
 
 function Progress() {
   return (
-    <div role="status" className="mt-10 max-w-3xl border-t border-rule pt-6">
+    <div role="status" className="mt-10 border-t border-rule pt-6">
       <div className="h-0.5 overflow-hidden bg-rule">
         <div className="h-full w-1/3 bg-brand animate-sweep motion-reduce:w-full motion-reduce:animate-none motion-reduce:opacity-40" />
       </div>
@@ -199,7 +234,7 @@ const ErrorPanel = forwardRef<HTMLHeadingElement, { error: SearchApiError; onRet
   function ErrorPanel({ error, onRetry, busy }, ref) {
     const canRetry = error.kind !== "invalid";
     return (
-      <section aria-labelledby="error-heading" className="mt-10 max-w-3xl border-l-4 border-signal-error bg-signal-errorbg px-5 py-4">
+      <section aria-labelledby="error-heading" className="mt-10 border-l-4 border-signal-error bg-signal-errorbg px-5 py-4">
         <h2 id="error-heading" ref={ref} tabIndex={-1} className="font-semibold focus:outline-none">
           The search didn’t complete
         </h2>
